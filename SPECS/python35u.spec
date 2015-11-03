@@ -37,6 +37,10 @@
 %global _macrosdir %{_sysconfdir}/rpm
 %endif
 
+# Current RHEL versions (5/6/7) still have SSLv3 enabled.  In the future, we
+# may need to wrap this in a conditional, depending on what RHEL8 does.
+%global sslv3 1
+
 %global pylibdir %{_libdir}/python%{pybasever}
 %global dynload_dir %{pylibdir}/lib-dynload
 
@@ -1048,7 +1052,9 @@ sed -r -i s/'_PIP_VERSION = "[0-9.]+"'/'_PIP_VERSION = "%{pip_version}"'/ Lib/en
 # 00195: upstream as of Python 3.4.2
 %patch196 -p1
 # 00197: upstream as of Python 3.4.2
+%if ! 0%{?sslv3}
 %patch199 -p1
+%endif
 # 00202: upstream as of 3.5.0b3
 %patch203 -p1
 # 00204: upstream as of 3.5.0b3
@@ -2003,6 +2009,7 @@ rm -fr %{buildroot}
 - Allow altinstall via main_python3 macro (borrowed from EPEL)
 - Use correct paths to brp-* files in __os_install_post macro
 - Use correct macros directory with _macrosdir
+- Disable Patch199 with sslv3 macro
 
 * Wed Oct 14 2015 Robert Kuska <rkuska@redhat.com> - 3.5.0-2
 - Rebuild with wheel set to 1
