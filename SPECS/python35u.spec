@@ -843,8 +843,6 @@ Summary: Libraries and header files needed for Python 3 development
 Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
-BuildRequires: python-macros
-Requires: python-macros
 Conflicts: %{name} < %{version}-%{release}
 
 %description devel
@@ -2028,6 +2026,7 @@ rm -fr %{buildroot}
 - Disable Patch199 with sslv3 macro
 - Relax expat requirement, and make using system expat optional
 - Include bundled wheels when not using rewheel
+- Remove dependency on python-macros
 
 * Wed Oct 14 2015 Robert Kuska <rkuska@redhat.com> - 3.5.0-2
 - Rebuild with wheel set to 1
