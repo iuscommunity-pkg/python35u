@@ -31,8 +31,10 @@
 
 %if 0%{?rhel} >= 7
 %global _brpdir /usr/lib/rpm
+%global _macrosdir %{_rpmconfigdir}/macros.d
 %else
 %global _brpdir /usr/lib/rpm/redhat
+%global _macrosdir %{_sysconfdir}/rpm
 %endif
 
 %global pylibdir %{_libdir}/python%{pybasever}
@@ -1415,9 +1417,8 @@ find %{buildroot} \
     -perm 555 -exec chmod 755 {} \;
 
 # Install macros for rpm:
-mkdir -p %{buildroot}/%{_rpmconfigdir}/macros.d/
-install -m 644 %{SOURCE2} %{buildroot}/%{_rpmconfigdir}/macros.d/
-install -m 644 %{SOURCE3} %{buildroot}/%{_rpmconfigdir}/macros.d/
+install -Dm0644 %{SOURCE2} %{buildroot}%{_macrosdir}/macros.python%{pybasever}
+install -Dm0644 %{SOURCE3} %{buildroot}%{_macrosdir}/macros.pybytecompile%{pybasever}
 
 # Ensure that the curses module was linked against libncursesw.so, rather than
 # libncurses.so (bug 539917)
@@ -1830,8 +1831,8 @@ rm -fr %{buildroot}
 %if 0%{?main_python3}
 %{_libdir}/pkgconfig/python3.pc
 %endif
-%{_rpmconfigdir}/macros.d/macros.python%{pybasever}
-%{_rpmconfigdir}/macros.d/macros.pybytecompile%{pybasever}
+%{_macrosdir}/macros.python%{pybasever}
+%{_macrosdir}/macros.pybytecompile%{pybasever}
 
 %files tools
 %if 0%{?main_python3}
@@ -2001,6 +2002,7 @@ rm -fr %{buildroot}
 - Port from Fedora to IUS
 - Allow altinstall via main_python3 macro (borrowed from EPEL)
 - Use correct paths to brp-* files in __os_install_post macro
+- Use correct macros directory with _macrosdir
 
 * Wed Oct 14 2015 Robert Kuska <rkuska@redhat.com> - 3.5.0-2
 - Rebuild with wheel set to 1
