@@ -857,7 +857,7 @@ The test modules from the main %{name} package.
 These are in a separate package to save space, as they are almost never used
 in production.
 
-You might want to install the python3-test package if you're developing
+You might want to install the %{name}-test package if you're developing
 python 3 code that uses more than just unittest and/or test_support.py.
 
 %if 0%{?with_debug_build}
@@ -876,7 +876,7 @@ Requires: %{name}-tkinter%{?_isa} = %{version}-%{release}
 Requires: %{name}-tools%{?_isa} = %{version}-%{release}
 
 %description debug
-python3-debug provides a version of the Python 3 runtime with numerous debugging
+%{name}-debug provides a version of the Python 3 runtime with numerous debugging
 features enabled, aimed at advanced Python users, such as developers of Python
 extension modules.
 
