@@ -243,8 +243,8 @@ Source1: find-provides-without-python-sonames.sh
 %global _use_internal_dependency_generator 0
 %global __find_provides %{SOURCE1}
 
-# Supply various useful macros for building python 3 modules:
-#  __python3, python3_sitelib, python3_sitearch
+# Supply various useful macros for building python 3.5 modules:
+#  __python35u, python35u_sitelib, python35u_sitearch
 Source2: macros.python%{pybasever}
 
 # Supply an RPM macro "py_byte_compile" for the python3-devel subpackage
@@ -2027,6 +2027,7 @@ rm -fr %{buildroot}
 - Relax expat requirement, and make using system expat optional
 - Include bundled wheels when not using rewheel
 - Remove dependency on python-macros
+- Modify macros to be specific to python35u
 
 * Wed Oct 14 2015 Robert Kuska <rkuska@redhat.com> - 3.5.0-2
 - Rebuild with wheel set to 1
