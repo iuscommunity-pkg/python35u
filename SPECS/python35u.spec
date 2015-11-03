@@ -1821,10 +1821,11 @@ rm -fr %{buildroot}
 %dir %{_includedir}/python%{LDVERSION_optimized}/
 %{_includedir}/python%{LDVERSION_optimized}/%{_pyconfig_h}
 
-#%{_libdir}/%{py_INSTSONAME_optimized}
 %if 0%{?main_python3}
 %{_libdir}/libpython3.so
 %endif
+%{_libdir}/libpython%{LDVERSION_optimized}.so
+%{_libdir}/libpython%{LDVERSION_optimized}.so.1.0
 %if 0%{?with_systemtap}
 %dir %(dirname %{tapsetdir})
 %dir %{tapsetdir}
@@ -1844,8 +1845,6 @@ rm -fr %{buildroot}
 %{_bindir}/python%{pybasever}-config
 %{_bindir}/python%{LDVERSION_optimized}-config
 %{_bindir}/python%{LDVERSION_optimized}-*-config
-%{_libdir}/libpython%{LDVERSION_optimized}.so
-%{_libdir}/libpython%{LDVERSION_optimized}.so.1.0
 %{_libdir}/pkgconfig/python-%{LDVERSION_optimized}.pc
 %{_libdir}/pkgconfig/python-%{pybasever}.pc
 %if 0%{?main_python3}
@@ -1969,7 +1968,6 @@ rm -fr %{buildroot}
 # do for the regular build above (bug 531901), since they're all in one package
 # now; they're listed below, under "-devel":
 
-#%{_libdir}/%{py_INSTSONAME_debug}
 %if 0%{?with_systemtap}
 %dir %(dirname %{tapsetdir})
 %dir %{tapsetdir}
@@ -2028,6 +2026,7 @@ rm -fr %{buildroot}
 - Include bundled wheels when not using rewheel
 - Remove dependency on python-macros
 - Modify macros to be specific to python35u
+- Move libpython* files from -devel to -libs
 
 * Wed Oct 14 2015 Robert Kuska <rkuska@redhat.com> - 3.5.0-2
 - Rebuild with wheel set to 1
