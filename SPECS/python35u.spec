@@ -18,6 +18,9 @@
 
 %global with_rewheel 1
 
+# Turn this to 0 to turn off the "check" phase:
+%global run_selftest_suite 0
+
 %global pybasever 3.5
 
 # pybasever without the dot:
@@ -83,9 +86,6 @@
 
 # Change from yes to no to turn this off
 %global with_computed_gotos yes
-
-# Turn this to 0 to turn off the "check" phase:
-%global run_selftest_suite 0
 
 # We want to byte-compile the .py files within the packages using the new
 # python3 binary.
