@@ -26,6 +26,9 @@
 # pybasever without the dot:
 %global pyshortver 35
 
+# This macro controls whether we are doing an install or altinstall.
+%global main_python3 0
+
 %global pylibdir %{_libdir}/python%{pybasever}
 %global dynload_dir %{pylibdir}/lib-dynload
 
@@ -1192,7 +1195,12 @@ InstallPython() {
 
   pushd $ConfDir
 
-make install DESTDIR=%{buildroot} INSTALL="install -p" EXTRA_CFLAGS="$MoreCFlags"
+%if 0%{?main_python3}
+make install \
+%else
+make altinstall \
+%endif
+  DESTDIR=%{buildroot} INSTALL="install -p" EXTRA_CFLAGS="$MoreCFlags"
 
   popd
 
@@ -1237,6 +1245,15 @@ make install DESTDIR=%{buildroot} INSTALL="install -p" EXTRA_CFLAGS="$MoreCFlags
 InstallPython debug \
   %{py_INSTSONAME_debug} \
   -O0
+
+%if ! 0%{?main_python3}
+# altinstall only creates pkgconfig/python-3.5.pc, not the version with ABIFAGS,
+#  so we need to move the debug .pc file to not overwrite it by optimized install
+mv \
+  %{buildroot}%{_libdir}/pkgconfig/python-%{pybasever}.pc \
+  %{buildroot}%{_libdir}/pkgconfig/python-%{LDVERSION_debug}.pc
+%endif
+
 %endif # with_debug_build
 
 # Now the optimized build:
@@ -1245,7 +1262,9 @@ InstallPython optimized \
 
 install -d -m 0755 ${RPM_BUILD_ROOT}%{pylibdir}/site-packages/__pycache__
 
-mv ${RPM_BUILD_ROOT}%{_bindir}/2to3 ${RPM_BUILD_ROOT}%{_bindir}/python3-2to3
+%if 0%{main_python3}
+mv ${RPM_BUILD_ROOT}%{_bindir}/2to3 ${RPM_BUILD_ROOT}%{_bindir}/2to3-3
+%endif
 
 # Development tools
 install -m755 -d ${RPM_BUILD_ROOT}%{pylibdir}/Tools
@@ -1421,8 +1440,14 @@ done
 %if 0%{?with_debug_build}
 ln -s \
   %{_bindir}/python%{LDVERSION_debug} \
+  %{buildroot}%{_bindir}/python%{pybasever}-debug
+
+%if 0%{main_python3}
+ln -s \
+  %{_bindir}/python%{pybasever}-debug \
   %{buildroot}%{_bindir}/python3-debug
-%endif
+%endif # main_python3
+%endif # with_debug_build
 
 #
 # Systemtap hooks:
@@ -1450,7 +1475,7 @@ sed \
 # working with debug build
 sed \
    -e "s|LIBRARY_PATH|%{_libdir}/%{py_INSTSONAME_debug}|" \
-   -e 's|"python3"|"python3-debug"|' \
+   -e 's|"python3"|"python%{pybasever}-debug"|' \
    %{_sourcedir}/libpython.stp \
    > %{buildroot}%{tapsetdir}/%{libpython_stp_debug}
 %endif # with_debug_build
@@ -1464,6 +1489,22 @@ echo -e '#!/bin/sh\nexec `dirname $0`/python%{LDVERSION_optimized}-`uname -m`-co
 echo '[ $? -eq 127 ] && echo "Could not find python%{LDVERSION_optimized}-`uname -m`-config. Look around to see available arches." >&2' >> \
   %{buildroot}%{_bindir}/python%{LDVERSION_optimized}-config
   chmod +x %{buildroot}%{_bindir}/python%{LDVERSION_optimized}-config
+
+%if ! 0%{?main_python3}
+# make altinstall doesn't create python3.X-config, but we want it
+#  (we don't want to have just python3.Xm-config, that's a bit confusing)
+ln -s \
+  %{_bindir}/python%{LDVERSION_optimized}-config \
+  %{buildroot}%{_bindir}/python%{pybasever}-config
+# make altinstall doesn't create python-3.5m.pc, only python-3.5.pc, but we want both
+ln -s \
+  %{_libdir}/pkgconfig/python-%{pybasever}.pc \
+  %{buildroot}%{_libdir}/pkgconfig/python-%{LDVERSION_optimized}.pc
+%endif # ! main_python3
+
+%if ! 0%{?main_python3}
+rm -f %{buildroot}%{_libdir}/libpython3.so
+%endif # ! main_python3
 
 # ======================================================
 # Running the upstream test suite
@@ -1541,10 +1582,14 @@ rm -fr %{buildroot}
 %files
 %doc LICENSE README
 %{_bindir}/pydoc*
+%if 0%{?main_python3}
 %{_bindir}/python3
+%endif
 %{_bindir}/python%{pybasever}
 %{_bindir}/python%{pybasever}m
+%if 0%{?main_python3}
 %{_bindir}/pyvenv
+%endif
 %{_bindir}/pyvenv-%{pybasever}
 %{_mandir}/*/*
 
@@ -1750,7 +1795,9 @@ rm -fr %{buildroot}
 %{_includedir}/python%{LDVERSION_optimized}/%{_pyconfig_h}
 
 #%{_libdir}/%{py_INSTSONAME_optimized}
+%if 0%{?main_python3}
 %{_libdir}/libpython3.so
+%endif
 %if 0%{?with_systemtap}
 %dir %(dirname %{tapsetdir})
 %dir %{tapsetdir}
@@ -1764,7 +1811,9 @@ rm -fr %{buildroot}
 %{_includedir}/python%{LDVERSION_optimized}/*.h
 %exclude %{_includedir}/python%{LDVERSION_optimized}/%{_pyconfig_h}
 %doc Misc/README.valgrind Misc/valgrind-python.supp Misc/gdbinit
+%if 0%{?main_python3}
 %{_bindir}/python3-config
+%endif
 %{_bindir}/python%{pybasever}-config
 %{_bindir}/python%{LDVERSION_optimized}-config
 %{_bindir}/python%{LDVERSION_optimized}-*-config
@@ -1772,12 +1821,16 @@ rm -fr %{buildroot}
 %{_libdir}/libpython%{LDVERSION_optimized}.so.1.0
 %{_libdir}/pkgconfig/python-%{LDVERSION_optimized}.pc
 %{_libdir}/pkgconfig/python-%{pybasever}.pc
+%if 0%{?main_python3}
 %{_libdir}/pkgconfig/python3.pc
+%endif
 %{_rpmconfigdir}/macros.d/macros.python%{pybasever}
 %{_rpmconfigdir}/macros.d/macros.pybytecompile%{pybasever}
 
 %files tools
-%{_bindir}/python3-2to3
+%if 0%{?main_python3}
+%{_bindir}/2to3-3
+%endif
 %{_bindir}/2to3-%{pybasever}
 %{_bindir}/idle*
 %{pylibdir}/Tools
@@ -1820,7 +1873,10 @@ rm -fr %{buildroot}
 
 # Analog of the core subpackage's files:
 %{_bindir}/python%{LDVERSION_debug}
+%if 0%{?main_python3}
 %{_bindir}/python3-debug
+%endif
+%{_bindir}/python%{pybasever}-debug
 
 # Analog of the -libs subpackage's files:
 # ...with debug builds of the built-in "extension" modules:
@@ -1937,6 +1993,7 @@ rm -fr %{buildroot}
 %changelog
 * Mon Oct 12 2015 Carl George <carl.george@rackspace.com> - 3.5.0-1.ius
 - Port from Fedora to IUS
+- Allow altinstall via main_python3 macro (borrowed from EPEL)
 
 * Wed Oct 14 2015 Robert Kuska <rkuska@redhat.com> - 3.5.0-2
 - Rebuild with wheel set to 1
