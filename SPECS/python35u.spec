@@ -16,7 +16,7 @@
 # 6) python35u-pip build_rewheel 1
 # 7) python35u with_rewheel 1
 
-%global with_rewheel 1
+%global with_rewheel 0
 
 # Turn this to 0 to turn off the "check" phase:
 %global run_selftest_suite 1
@@ -2046,6 +2046,7 @@ rm -fr %{buildroot}
 - Skip test_ensurepip and test_venv when building with rewheel
 - Skip test_readline when el < 7
 - Add patch to skip new finalization tests
+- Disable rewheel
 
 * Wed Oct 14 2015 Robert Kuska <rkuska@redhat.com> - 3.5.0-2
 - Rebuild with wheel set to 1
