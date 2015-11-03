@@ -19,7 +19,7 @@
 %global with_rewheel 1
 
 # Turn this to 0 to turn off the "check" phase:
-%global run_selftest_suite 0
+%global run_selftest_suite 1
 
 %global pybasever 3.5
 
@@ -775,6 +775,10 @@ Patch205: 00205-make-libpl-respect-lib64.patch
 # by debian but fedora infra uses only eabi without hf
 Patch206: 00206-remove-hf-from-arm-triplet.patch
 
+# 00400 #
+# New in 3.5, but described as "fragile" by upstream.  Skip for now.
+# https://bugs.python.org/issue22599
+Patch400: 00400-disable-finalization-tests.patch
 
 
 # (New patches go here ^^^)
@@ -1068,6 +1072,7 @@ sed -r -i s/'_PIP_VERSION = "[0-9.]+"'/'_PIP_VERSION = "%{pip_version}"'/ Lib/en
 # 00204: upstream as of 3.5.0b3
 %patch205 -p1
 %patch206 -p1
+%patch400 -p1
 
 # Currently (2010-01-15), http://docs.python.org/library is for 2.6, and there
 # are many differences between 2.6 and the Python 3 library.
@@ -1558,10 +1563,20 @@ CheckPython() {
   #   @unittest._expectedFailureInRpmBuild
   # test_faulthandler.test_register_chain currently fails on ppc64le and
   #   aarch64, see upstream bug http://bugs.python.org/issue21131
+  # test_readline.TestReadline fails on el < 7, see upstream bugs
+  #   http://bugs.python.org/issue19884
+  #   http://bugs.python.org/issue22773
   WITHIN_PYTHON_RPM_BUILD= \
   LD_LIBRARY_PATH=$ConfDir $ConfDir/python -m test.regrtest \
     --verbose --findleaks \
     -x test_distutils \
+    %if 0%{!with_rewheel}
+    -x test_ensurepip \
+    -x test_venv \
+    %endif
+    %if 0%{?rhel} < 7
+    -x test_readline \
+    %endif
     %ifarch ppc64le aarch64
     -x test_faulthandler \
     %endif
@@ -2027,6 +2042,10 @@ rm -fr %{buildroot}
 - Remove dependency on python-macros
 - Modify macros to be specific to python35u
 - Move libpython* files from -devel to -libs
+- Enable test suite
+- Skip test_ensurepip and test_venv when building with rewheel
+- Skip test_readline when el < 7
+- Add patch to skip new finalization tests
 
 * Wed Oct 14 2015 Robert Kuska <rkuska@redhat.com> - 3.5.0-2
 - Rebuild with wheel set to 1
