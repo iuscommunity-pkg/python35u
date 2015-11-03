@@ -29,6 +29,12 @@
 # This macro controls whether we are doing an install or altinstall.
 %global main_python3 0
 
+%if 0%{?rhel} >= 7
+%global _brpdir /usr/lib/rpm
+%else
+%global _brpdir /usr/lib/rpm/redhat
+%endif
+
 %global pylibdir %{_libdir}/python%{pybasever}
 %global dynload_dir %{pylibdir}/lib-dynload
 
@@ -101,11 +107,11 @@
 # (/usr/bin/python, rather than the freshly built python), thus leading to
 # numerous syntax errors, and incorrect magic numbers in the .pyc files.  We
 # thus override __os_install_post to avoid invoking this script:
-%global __os_install_post /usr/lib/rpm/brp-compress \
-  %{!?__debug_package:/usr/lib/rpm/brp-strip %{__strip}} \
-  /usr/lib/rpm/brp-strip-static-archive %{__strip} \
-  /usr/lib/rpm/brp-strip-comment-note %{__strip} %{__objdump} \
-  /usr/lib/rpm/brp-python-hardlink 
+%global __os_install_post %{_brpdir}/brp-compress \
+  %{!?__debug_package:%{_brpdir}/brp-strip %{__strip}} \
+  %{_brpdir}/brp-strip-static-archive %{__strip} \
+  %{_brpdir}/brp-strip-comment-note %{__strip} %{__objdump} \
+  %{_brpdir}/brp-python-hardlink
 # to remove the invocation of brp-python-bytecompile, whilst keeping the
 # invocation of brp-python-hardlink (since this should still work for python3
 # pyc/pyo files)
@@ -1994,6 +2000,7 @@ rm -fr %{buildroot}
 * Mon Oct 12 2015 Carl George <carl.george@rackspace.com> - 3.5.0-1.ius
 - Port from Fedora to IUS
 - Allow altinstall via main_python3 macro (borrowed from EPEL)
+- Use correct paths to brp-* files in __os_install_post macro
 
 * Wed Oct 14 2015 Robert Kuska <rkuska@redhat.com> - 3.5.0-2
 - Rebuild with wheel set to 1
