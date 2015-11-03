@@ -898,7 +898,7 @@ can load its own extensions.
 # ======================================================
 
 %prep
-%setup -q -n Python-%{version}%{?prerel}
+%setup -q -n Python-%{version}
 chmod +x %{SOURCE1}
 
 %if 0%{?with_systemtap}
