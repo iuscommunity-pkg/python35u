@@ -1741,7 +1741,11 @@ rm -fr %{buildroot}
 %dir %{pylibdir}/ensurepip/__pycache__/
 %{pylibdir}/ensurepip/*.py
 %{pylibdir}/ensurepip/__pycache__/*%{bytecode_suffixes}
+%if 0%{?with_rewheel}
 %exclude %{pylibdir}/ensurepip/_bundled
+%else
+%{pylibdir}/ensurepip/_bundled
+%endif
 
 %if 0%{?with_rewheel}
 %dir %{pylibdir}/ensurepip/rewheel/
@@ -2023,6 +2027,7 @@ rm -fr %{buildroot}
 - Use correct macros directory with _macrosdir
 - Disable Patch199 with sslv3 macro
 - Relax expat requirement, and make using system expat optional
+- Include bundled wheels when not using rewheel
 
 * Wed Oct 14 2015 Robert Kuska <rkuska@redhat.com> - 3.5.0-2
 - Rebuild with wheel set to 1
