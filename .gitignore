@@ -1,1 +1,6 @@
-/*.tar.*
+BUILD
+BUILDROOT
+MOCK
+RPMS
+SOURCES/*.tar.xz
+SRPMS
