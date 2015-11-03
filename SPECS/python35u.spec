@@ -167,7 +167,7 @@
 Summary: Version 3 of the Python programming language aka Python 3000
 Name: python%{pyshortver}u
 Version: %{pybasever}.0
-Release: 1.ius%{?dist}
+Release: 2.ius%{?dist}
 License: Python
 Group: Development/Languages
 
@@ -2031,7 +2031,7 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
-* Mon Oct 12 2015 Carl George <carl.george@rackspace.com> - 3.5.0-1.ius
+* Mon Nov 03 2015 Carl George <carl.george@rackspace.com> - 3.5.0-2.ius
 - Port from Fedora to IUS
 - Allow altinstall via main_python3 macro (borrowed from EPEL)
 - Use correct paths to brp-* files in __os_install_post macro
