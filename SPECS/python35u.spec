@@ -2,17 +2,19 @@
 # Conditionals and other variables controlling the build
 # ======================================================
 
-# NOTES ON BOOTSTRAPING PYTHON 3.4:
+# NOTES ON BOOTSTRAPPING PYTHON 3.5:
 #
 # Due to dependency cycle between Python, pip, setuptools and
 # wheel caused by the rewheel patch, one has to build in the
 # following order:
 #
-# 1) python3 with with_rewheel set to 0
-# 2) python3-setuptools and python3-pip with with_rewheel set to 0
-# 3) python3-wheel
-# 4) python3-setuptools and python3-pip with with_rewheel set to 1
-# 5) python3 with with_rewheel set to 1
+# 1) python35u with_rewheel 0
+# 2) python35u-setuptools build_rewheel 0
+# 3) python35u-pip build_rewheel 0
+# 4) python35u-wheel
+# 5) python35u-setuptools build_rewheel 1
+# 6) python35u-pip build_rewheel 1
+# 7) python35u with_rewheel 1
 
 %global with_rewheel 1
 
@@ -87,7 +89,7 @@
 
 # We want to byte-compile the .py files within the packages using the new
 # python3 binary.
-# 
+#
 # Unfortunately, rpmbuild's infrastructure requires us to jump through some
 # hoops to avoid byte-compiling with the system python 2 version:
 #   /usr/lib/rpm/redhat/macros sets up build policy that (amongst other things)
@@ -243,10 +245,12 @@ Source7: pyfuntop.stp
 # Written by bkabrda
 Source8: check-pyc-and-pyo-timestamps.py
 
+# 00001 #
 # Fixup distutils/unixccompiler.py to remove standard library path from rpath:
 # Was Patch0 in ivazquez' python3000 specfile:
 Patch1:         Python-3.1.1-rpath.patch
 
+# 00003 #
 # Some tests were removed due to audiotest.au not being packaged. This was
 # however added to the archive in 3.3.1, so we no longer delete the tests.
 #  Patch3: 00003-remove-mimeaudio-tests.patch
@@ -258,6 +262,7 @@ Patch1:         Python-3.1.1-rpath.patch
 # (where sys.getfilesystemencoding() == 'ascii')
 Patch55: 00055-systemtap.patch
 
+# 00102 #
 Patch102: 00102-lib64.patch
 
 # 00104 #
@@ -354,6 +359,7 @@ Patch137: 00137-skip-distutils-tests-that-fail-in-rpmbuild.patch
 #  http://bugs.python.org/issue8265 (rhbz#706253)
 Patch139: 00139-skip-test_float-known-failure-on-arm.patch
 
+# 00140 #
 # ideally short lived patch disabling a test thats fragile on different arches
 Patch140: python3-arm-skip-failing-fragile-test.patch
 
@@ -462,7 +468,7 @@ Patch155: 00155-avoid-ctypes-thunks.patch
 # Recent builds of gdb will only auto-load scripts from certain safe
 # locations.  Turn off this protection when running test_gdb in the selftest
 # suite to ensure that it can load our -gdb.py script (rhbz#817072):
-# Upsream as of 3.4.3
+# Upstream as of 3.4.3
 #  Patch156: 00156-gdb-autoload-safepath.patch
 
 # 00157 #
@@ -540,14 +546,14 @@ Patch164: 00164-disable-interrupted_write-tests-on-ppc.patch
 # in python.spec
 # TODO: python3 status?
 
-# 00170 #                                                                                           
-# In debug builds, try to print repr() when a C-level assert fails in the                           
-# garbage collector (typically indicating a reference-counting error                                
-# somewhere else e.g in an extension module)                                                        
-# Backported to 2.7 from a patch I sent upstream for py3k                                           
-#   http://bugs.python.org/issue9263  (rhbz#614680)                                                 
-# hiding the proposed new macros/functions within gcmodule.c to avoid exposing                      
-# them within the extension API.                                                                    
+# 00170 #
+# In debug builds, try to print repr() when a C-level assert fails in the
+# garbage collector (typically indicating a reference-counting error
+# somewhere else e.g in an extension module)
+# Backported to 2.7 from a patch I sent upstream for py3k
+#   http://bugs.python.org/issue9263  (rhbz#614680)
+# hiding the proposed new macros/functions within gcmodule.c to avoid exposing
+# them within the extension API.
 # (rhbz#850013
 Patch170: 00170-gc-assertions.patch
 
@@ -656,7 +662,6 @@ Patch186: 00186-dont-raise-from-py_compile.patch
 Patch188: 00188-fix-lib2to3-tests-when-hashlib-doesnt-compile-properly.patch
 
 # 00189 #
-#
 # Add the rewheel module, allowing to recreate wheels from already installed
 # ones
 # https://github.com/bkabrda/rewheel
@@ -665,40 +670,36 @@ Patch189: 00189-add-rewheel-module.patch
 %endif
 
 # 00190 #
-#
 # Fix tests with SQLite >= 3.8.4
 # http://bugs.python.org/issue20901
 # http://hg.python.org/cpython/rev/4d626a9df062
 # FIXED UPSTREAM
 # Patch190: 00190-fix-tests-with-sqlite-3.8.4.patch
 
-# 00193
-#
+# 00193 #
 # Skip correct number of *.pyc file bytes in ModuleFinder.load_module
 # rhbz#1060338
 # http://bugs.python.org/issue20778
 # FIXED UPSTREAM
 # Patch193: 00193-skip-correct-num-of-pycfile-bytes-in-modulefinder.patch
 
+# 00194 #
 # Tests requiring SIGHUP to work don't work in Koji
 # see rhbz#1088233
 Patch194: temporarily-disable-tests-requiring-SIGHUP.patch
 
-# 00195
-#
+# 00195 #
 # Don't declare Werror=declaration-after-statement for extension
 # modules through setup.py
 # http://bugs.python.org/issue21121
 # FIXED UPSTREAM
 # Patch195: 00195-dont-add-Werror-declaration-after-statement.patch
 
-# 00196
-#
+# 00196 #
 #  Fix test_gdb failure on ppc64le
 Patch196: 00196-test-gdb-match-addr-before-builtin.patch
 
-# 00197
-#
+# 00197 #
 # The CGIHTTPServer Python module did not properly handle URL-encoded
 # path separators in URLs. This may have enabled attackers to disclose a CGI
 # script's source code or execute arbitrary scripts in the server's
@@ -706,22 +707,23 @@ Patch196: 00196-test-gdb-match-addr-before-builtin.patch
 # FIXED UPSTREAM
 # Patch197: 00197-fix-CVE-2014-4650.patch
 
+# 00199 #
 # OpenSSL disabled SSLv3 in SSLv23 method
 # This patch alters python tests to reflect this change
 # Issue: http://bugs.python.org/issue22638 Upstream discussion about SSLv3 in Python
 Patch199: 00199-alter-tests-to-reflect-sslv3-disabled.patch
 
-# 00200 #                                                                                           
-# Fix for gettext plural form headers (lines that begin with "#")                                   
+# 00200 #
+# Fix for gettext plural form headers (lines that begin with "#")
 # Note: Backported from scl
 Patch200: 00200-gettext-plural-fix.patch
 
-# 00201 #                                                                                           
-# Fixes memory leak in gdbm module (rhbz#977308)                                                    
-# This was upstreamed as a part of bigger patch, but for our purposes                               
-# this is ok: http://bugs.python.org/issue18404                                                     
+# 00201 #
+# Fixes memory leak in gdbm module (rhbz#977308)
+# This was upstreamed as a part of bigger patch, but for our purposes
+# this is ok: http://bugs.python.org/issue18404
 # Note: Backported from scl
-Patch201: 00201-fix-memory-leak-in-gdbm.patch 
+Patch201: 00201-fix-memory-leak-in-gdbm.patch
 
 # 00202 #
 # Fixes undefined behaviour in faulthandler which caused test to hang on x86_64
@@ -729,17 +731,21 @@ Patch201: 00201-fix-memory-leak-in-gdbm.patch
 # FIXED UPSTREAM
 #Patch202: 00202-fix-undefined-behaviour-in-faulthandler.patch
 
+# 00203 #
 # test_threading fails in koji dues to it's handling of signals
 Patch203: 00203-disable-threading-test-koji.patch
 
+# 00204 #
 # openssl requires DH keys to be > 768bits
 # FIXED UPSTREAM
 # Patch204: 00204-increase-dh-keys-size.patch
 
+# 00205 #
 # LIBPL variable in makefile takes LIBPL from configure.ac
 # but the LIBPL variable defined there doesn't respect libdir macro
 Patch205: 00205-make-libpl-respect-lib64.patch
 
+# 00206 #
 # Remove hf flag from arm triplet which is used
 # by debian but fedora infra uses only eabi without hf
 Patch206: 00206-remove-hf-from-arm-triplet.patch
@@ -1094,7 +1100,7 @@ exit 1
 # Define a function, for how to perform a "build" of python for a given
 # configuration:
 BuildPython() {
-  ConfName=$1	      
+  ConfName=$1
   BinaryName=$2
   SymlinkName=$3
   ExtraConfigArgs=$4
@@ -1175,7 +1181,7 @@ mkdir -p %{buildroot}%{_prefix} %{buildroot}%{_mandir}
 
 InstallPython() {
 
-  ConfName=$1	      
+  ConfName=$1
   PyInstSoName=$2
   MoreCFlags=$3
 
@@ -1360,7 +1366,7 @@ find %{buildroot}/ -name \*.py -exec sed -i 's/\r//' {} \;
 # Fix an encoding:
 iconv -f iso8859-1 -t utf-8 %{buildroot}/%{pylibdir}/Demo/rpc/README > README.conv && mv -f README.conv %{buildroot}/%{pylibdir}/Demo/rpc/README
 
-# Note that 
+# Note that
 #  %{pylibdir}/Demo/distutils/test2to3/setup.py
 # is in iso-8859-1 encoding, and that this is deliberate; this is test data
 # for the 2to3 tool, and one of the functions of the 2to3 tool is to fixup
@@ -1401,7 +1407,6 @@ for Module in %{buildroot}/%{dynload_dir}/*.so ; do
     *.%{SOABI_debug})
         ldd $Module | grep %{py_INSTSONAME_optimized} &&
             (echo Debug module $Module linked against optimized %{py_INSTSONAME_optimized} ; exit 1)
-            
         ;;
     *.%{SOABI_optimized})
         ldd $Module | grep %{py_INSTSONAME_debug} &&
@@ -1475,7 +1480,7 @@ find %{buildroot} -type f -a -name "*.py" -print0 | \
 
 topdir=$(pwd)
 CheckPython() {
-  ConfName=$1	      
+  ConfName=$1
   ConfDir=$(pwd)/build/$ConfName
 
   echo STARTING: CHECKING OF PYTHON FOR CONFIGURATION: $ConfName
@@ -1534,7 +1539,6 @@ rm -fr %{buildroot}
 
 
 %files
-%defattr(-, root, root)
 %doc LICENSE README
 %{_bindir}/pydoc*
 %{_bindir}/python3
@@ -1545,7 +1549,6 @@ rm -fr %{buildroot}
 %{_mandir}/*/*
 
 %files libs
-%defattr(-,root,root,-)
 %doc LICENSE README
 %dir %{pylibdir}
 %dir %{dynload_dir}
@@ -1756,7 +1759,6 @@ rm -fr %{buildroot}
 %endif
 
 %files devel
-%defattr(-,root,root)
 %{pylibdir}/config-%{LDVERSION_optimized}/*
 %exclude %{pylibdir}/config-%{LDVERSION_optimized}/Makefile
 %{_includedir}/python%{LDVERSION_optimized}/*.h
@@ -1775,7 +1777,6 @@ rm -fr %{buildroot}
 %{_rpmconfigdir}/macros.d/macros.pybytecompile%{pybasever}
 
 %files tools
-%defattr(-,root,root,755)
 %{_bindir}/python3-2to3
 %{_bindir}/2to3-%{pybasever}
 %{_bindir}/idle*
@@ -1783,7 +1784,6 @@ rm -fr %{buildroot}
 %doc %{pylibdir}/Doc
 
 %files tkinter
-%defattr(-,root,root,755)
 %{pylibdir}/tkinter
 %exclude %{pylibdir}/tkinter/test
 %{dynload_dir}/_tkinter.%{SOABI_optimized}.so
@@ -1796,7 +1796,6 @@ rm -fr %{buildroot}
 %{pylibdir}/turtledemo/__pycache__/*%{bytecode_suffixes}
 
 %files test
-%defattr(-, root, root)
 %{pylibdir}/ctypes/test
 %{pylibdir}/distutils/tests
 %{pylibdir}/sqlite3/test
@@ -1818,7 +1817,6 @@ rm -fr %{buildroot}
 
 %if 0%{?with_debug_build}
 %files debug
-%defattr(-,root,root,-)
 
 # Analog of the core subpackage's files:
 %{_bindir}/python%{LDVERSION_debug}
@@ -1920,15 +1918,15 @@ rm -fr %{buildroot}
 
 # We put the debug-gdb.py file inside /usr/lib/debug to avoid noise from
 # ldconfig (rhbz:562980).
-# 
+#
 # The /usr/lib/rpm/redhat/macros defines %__debug_package to use
 # debugfiles.list, and it appears that everything below /usr/lib/debug and
 # (/usr/src/debug) gets added to this file (via LISTFILES) in
 # /usr/lib/rpm/find-debuginfo.sh
-# 
+#
 # Hence by installing it below /usr/lib/debug we ensure it is added to the
 # -debuginfo subpackage
-# (if it doesn't, then the rpmbuild ought to fail since the debug-gdb.py 
+# (if it doesn't, then the rpmbuild ought to fail since the debug-gdb.py
 # payload file would be unpackaged)
 
 
