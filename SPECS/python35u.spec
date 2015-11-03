@@ -140,9 +140,9 @@
 # Top-level metadata
 # ==================
 Summary: Version 3 of the Python programming language aka Python 3000
-Name: python3
+Name: python%{pyshortver}u
 Version: %{pybasever}.0
-Release: 2%{?dist}
+Release: 1.ius%{?dist}
 License: Python
 Group: Development/Languages
 
@@ -201,8 +201,8 @@ BuildRequires: xz-devel
 BuildRequires: zlib-devel
 
 %if 0%{?with_rewheel}
-BuildRequires: python3-setuptools
-BuildRequires: python3-pip
+BuildRequires: python%{pyshortver}u-setuptools
+BuildRequires: python%{pyshortver}u-pip
 %endif
 
 
@@ -791,8 +791,8 @@ Provides: python(abi) = %{pybasever}
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 
 %if 0%{with_rewheel}
-Requires: python3-setuptools
-Requires: python3-pip
+Requires: python%{pyshortver}u-setuptools
+Requires: python%{pyshortver}u-pip
 %endif
 
 %description
@@ -1935,6 +1935,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Mon Oct 12 2015 Carl George <carl.george@rackspace.com> - 3.5.0-1.ius
+- Port from Fedora to IUS
+
 * Wed Oct 14 2015 Robert Kuska <rkuska@redhat.com> - 3.5.0-2
 - Rebuild with wheel set to 1
 
