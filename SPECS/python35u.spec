@@ -150,6 +150,16 @@
 # the rest of the build
 %global regenerate_autotooling_patch 0
 
+# expat 2.1.0 added the symbol XML_SetHashSalt without bumping SONAME.  This
+# symbol is used in pyexpat in order to mitigate CVE-2012-0876.  That symbol
+# was backported to el5/el6: https://rhn.redhat.com/errata/RHSA-2012-0731.html
+# However, el5's expat is missing other symbols that cause the build to fail.
+# We'll use the bundled expat on el5, and stock expat on el6.
+%if 0%{?rhel} >= 6
+%global with_system_expat 1
+%else
+%global with_system_expat 0
+%endif
 
 # ==================
 # Top-level metadata
@@ -174,9 +184,9 @@ BuildRequires: bzip2
 BuildRequires: bzip2-devel
 BuildRequires: db4-devel >= 4.7
 
-# expat 2.1.0 added the symbol XML_SetHashSalt without bumping SONAME.  We use
-# it (in pyexpat) in order to enable the fix in Python-3.2.3 for CVE-2012-0876:
-BuildRequires: expat-devel >= 2.1.0
+%if 0%{?with_system_expat}
+BuildRequires: expat-devel
+%endif
 
 BuildRequires: findutils
 BuildRequires: gcc-c++
@@ -821,11 +831,9 @@ Summary:        Python 3 runtime libraries
 Group:          Development/Libraries
 #Requires:       %{name} = %{version}-%{release}
 
-# expat 2.1.0 added the symbol XML_SetHashSalt without bumping SONAME.  We use
-# this symbol (in pyexpat), so we must explicitly state this dependency to
-# prevent "import pyexpat" from failing with a linker error if someone hasn't
-# yet upgraded expat:
-Requires: expat >= 2.1.0
+%if 0%{?with_system_expat}
+Requires: expat
+%endif
 
 %description libs
 This package contains files used to embed Python 3 into applications.
@@ -925,7 +933,9 @@ cp -a %{SOURCE7} .
 # Ensure that we're using the system copy of various libraries, rather than
 # copies shipped by upstream in the tarball:
 #   Remove embedded copy of expat:
+%if 0%{?with_system_expat}
 rm -r Modules/expat || exit 1
+%endif
 
 #   Remove embedded copy of libffi:
 for SUBDIR in darwin libffi libffi_arm_wince libffi_msvc libffi_osx ; do
@@ -1139,7 +1149,9 @@ BuildPython() {
   --enable-shared \
   --with-computed-gotos=%{with_computed_gotos} \
   --with-dbmliborder=gdbm:ndbm:bdb \
+%if 0%{?with_system_expat}
   --with-system-expat \
+%endif
   --with-system-ffi \
   --enable-loadable-sqlite-extensions \
 %if 0%{?with_systemtap}
@@ -2010,6 +2022,7 @@ rm -fr %{buildroot}
 - Use correct paths to brp-* files in __os_install_post macro
 - Use correct macros directory with _macrosdir
 - Disable Patch199 with sslv3 macro
+- Relax expat requirement, and make using system expat optional
 
 * Wed Oct 14 2015 Robert Kuska <rkuska@redhat.com> - 3.5.0-2
 - Rebuild with wheel set to 1
