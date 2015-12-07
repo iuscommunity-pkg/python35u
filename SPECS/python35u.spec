@@ -2033,6 +2033,7 @@ rm -fr %{buildroot}
 %changelog
 * Mon Dec 07 2015 Carl George <carl.george@rackspace.com> - 3.5.1-1.ius
 - Latest upstream
+- Refreshed patches: 55 (systemtap)
 
 * Tue Nov 03 2015 Carl George <carl.george@rackspace.com> - 3.5.0-2.ius
 - Port from Fedora to IUS
