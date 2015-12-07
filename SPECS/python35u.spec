@@ -2031,7 +2031,7 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
-* Mon Nov 03 2015 Carl George <carl.george@rackspace.com> - 3.5.0-2.ius
+* Tue Nov 03 2015 Carl George <carl.george@rackspace.com> - 3.5.0-2.ius
 - Port from Fedora to IUS
 - Allow altinstall via main_python3 macro (borrowed from EPEL)
 - Use correct paths to brp-* files in __os_install_post macro
