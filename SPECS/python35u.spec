@@ -37,10 +37,6 @@
 %global _macrosdir %{_sysconfdir}/rpm
 %endif
 
-# Current RHEL versions (5/6/7) still have SSLv3 enabled.  In the future, we
-# may need to wrap this in a conditional, depending on what RHEL8 does.
-%global sslv3 1
-
 %global pylibdir %{_libdir}/python%{pybasever}
 %global dynload_dir %{pylibdir}/lib-dynload
 
@@ -471,12 +467,6 @@ Patch194: temporarily-disable-tests-requiring-SIGHUP.patch
 #  Fix test_gdb failure on ppc64le
 Patch196: 00196-test-gdb-match-addr-before-builtin.patch
 
-# 00199 #
-# OpenSSL disabled SSLv3 in SSLv23 method
-# This patch alters python tests to reflect this change
-# Issue: http://bugs.python.org/issue22638 Upstream discussion about SSLv3 in Python
-Patch199: 00199-alter-tests-to-reflect-sslv3-disabled.patch
-
 # 00200 #
 # Fix for gettext plural form headers (lines that begin with "#")
 # Note: Backported from scl
@@ -716,9 +706,6 @@ sed -r -i s/'_PIP_VERSION = "[0-9.]+"'/'_PIP_VERSION = "%{pip_version}"'/ Lib/en
 
 %patch194 -p1
 %patch196 -p1
-%if ! 0%{?sslv3}
-%patch199 -p1
-%endif
 %patch203 -p1
 %patch205 -p1
 %patch206 -p1
@@ -1654,6 +1641,7 @@ rm -fr %{buildroot}
 %changelog
 * Tue Jan 19 2016 Carl George <carl.george@rackspace.com> - 3.5.1-2.ius
 - Remove COUNT_ALLOCS and autotooling patches per rhbz#1291325 (Fedora)
+- Drop patch199 (merged upstream)
 
 * Mon Dec 07 2015 Carl George <carl.george@rackspace.com> - 3.5.1-1.ius
 - Latest upstream
