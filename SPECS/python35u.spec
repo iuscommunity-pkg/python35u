@@ -123,33 +123,6 @@
 # pyc/pyo files)
 
 
-# We need to get a newer configure generated out of configure.in for the following
-# patches:
-#   patch 55 (systemtap)
-#   patch 113 (more config flags)
-#
-# For patch 55 (systemtap), we need to get a new header for configure to use
-#
-# configure.in requires autoconf-2.65, but the version in Fedora is currently
-# autoconf-2.66
-#
-# For now, we'll generate a patch to the generated configure script and
-# pyconfig.h.in on a machine that has a local copy of autoconf 2.65
-#
-# Instructions on obtaining such a copy can be seen at
-#   http://bugs.python.org/issue7997
-#
-# To make it easy to regenerate the patch, this specfile can be run in two
-# ways:
-# (i) regenerate_autotooling_patch  0 : the normal approach: prep the
-# source tree using a pre-generated patch to the "configure" script, and do a
-# full build
-# (ii) regenerate_autotooling_patch 1 : intended to be run on a developer's
-# workstation: prep the source tree without patching configure, then rerun a
-# local copy of autoconf-2.65, regenerate the patch, then exit, without doing
-# the rest of the build
-%global regenerate_autotooling_patch 0
-
 # expat 2.1.0 added the symbol XML_SetHashSalt without bumping SONAME.  This
 # symbol is used in pyexpat in order to mitigate CVE-2012-0876.  That symbol
 # was backported to el5/el6: https://rhn.redhat.com/errata/RHSA-2012-0731.html
@@ -167,7 +140,7 @@
 Summary: Version 3 of the Python programming language aka Python 3000
 Name: python%{pyshortver}u
 Version: %{pybasever}.1
-Release: 1.ius%{?dist}
+Release: 2.ius%{?dist}
 License: Python
 Group: Development/Languages
 
@@ -296,22 +269,6 @@ Patch104: 00104-lib64-fix-for-test_install.patch
 # Downstream only: not appropriate for upstream
 Patch111: 00111-no-static-lib.patch
 
-# 00113 #
-# Add configure-time support for the COUNT_ALLOCS and CALL_PROFILE options
-# described at http://svn.python.org/projects/python/trunk/Misc/SpecialBuilds.txt
-# so that if they are enabled, they will be in that build's pyconfig.h, so that
-# extension modules will reliably use them
-# Not yet sent upstream
-Patch113: 00113-more-configuration-flags.patch
-
-# 00125 #
-# COUNT_ALLOCS is useful for debugging, but the upstream behaviour of always
-# emitting debug info to stdout on exit is too verbose and makes it harder to
-# use the debug build.  Add a "PYTHONDUMPCOUNTS" environment variable which
-# must be set to enable the output on exit
-# Not yet sent upstream
-Patch125: 00125-less-verbose-COUNT_ALLOCS.patch
-
 # 00131 #
 # The four tests in test_io built on top of check_interrupted_write_retry
 # fail when built in Koji, for ppc and ppc64; for some reason, the SIGALRM
@@ -337,18 +294,6 @@ Patch132: 00132-add-rpmbuild-hooks-to-unittest.patch
 # 00133-skip-test_dl.patch is not relevant for python3: the "dl" module no
 # longer exists
 
-# 00134 #
-# Fix a failure in test_sys.py when configured with COUNT_ALLOCS enabled
-# Not yet sent upstream
-Patch134: 00134-fix-COUNT_ALLOCS-failure-in-test_sys.patch
-
-# 00135 #
-# test_weakref's test_callback_in_cycle_resurrection doesn't work with
-# COUNT_ALLOCS, as the metrics keep "C" alive.  Work around this for our
-# debug build:
-# Not yet sent upstream
-Patch135: 00135-fix-test-within-test_weakref-in-debug-build.patch
-
 # 00137 #
 # Some tests within distutils fail when run in an rpmbuild:
 Patch137: 00137-skip-distutils-tests-that-fail-in-rpmbuild.patch
@@ -361,13 +306,6 @@ Patch139: 00139-skip-test_float-known-failure-on-arm.patch
 # 00140 #
 # ideally short lived patch disabling a test thats fragile on different arches
 Patch140: python3-arm-skip-failing-fragile-test.patch
-
-# 00141 #
-# Fix tests for case when  tests for case when configured with
-# COUNT_ALLOCS (debug build): http://bugs.python.org/issue19527
-# Applies to: test_gc, test_module, test_io, test_logging, test_warnings,
-#             test_threading
-Patch141: 00141-fix-tests_with_COUNT_ALLOCS.patch
 
 # 00143 #
 # Fix the --with-tsc option on ppc64, and rework it on 32-bit ppc to avoid
@@ -570,32 +508,6 @@ Patch206: 00206-remove-hf-from-arm-triplet.patch
 # https://bugs.python.org/issue22599
 Patch400: 00400-disable-finalization-tests.patch
 
-
-# (New patches go here ^^^)
-#
-# When adding new patches to "python" and "python3" in Fedora 17 onwards,
-# please try to keep the patch numbers in-sync between the two specfiles:
-#
-#   - use the same patch number across both specfiles for conceptually-equivalent
-#     fixes, ideally with the same name
-#
-#   - when a patch is relevant to both specfiles, use the same introductory
-#     comment in both specfiles where possible (to improve "diff" output when
-#     comparing them)
-#
-#   - when a patch is only relevant for one of the two specfiles, leave a gap
-#     in the patch numbering in the other specfile, adding a comment when
-#     omitting a patch, both in the manifest section here, and in the "prep"
-#     phase below
-#
-# Hopefully this will make it easier to ensure that all relevant fixes are
-# applied to both versions.
-
-# This is the generated patch to "configure"; see the description of
-#   %{regenerate_autotooling_patch}
-# above:
-Patch5000: 05000-autotool-intermediates.patch
-
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 
 # ======================================================
@@ -769,23 +681,15 @@ sed -r -i s/'_PIP_VERSION = "[0-9.]+"'/'_PIP_VERSION = "%{pip_version}"'/ Lib/en
 
 
 %patch111 -p1
-%patch113 -p1
-
-%patch125 -p1 -b .less-verbose-COUNT_ALLOCS
-
 %ifarch ppc %{power64}
 %patch131 -p1
 %endif
-
 %patch132 -p1
-%patch134 -p1
-%patch135 -p1
 %patch137 -p1
 %ifarch %{arm}
 %patch139 -p1
 %patch140 -p1
 %endif
-%patch141 -p1
 %patch143 -p1 -b .tsc-on-ppc
 %patch146 -p1
 %ifarch ppc %{power64}
@@ -830,12 +734,6 @@ sed --in-place \
     --expression="s|http://docs.python.org/library|http://docs.python.org/%{pybasever}/library|g" \
     Lib/pydoc.py || exit 1
 
-%if ! 0%{regenerate_autotooling_patch}
-# Normally we apply the patch to "configure"
-# We don't apply the patch if we're working towards regenerating it
-%patch5000 -p0 -b .autotool-intermediates
-%endif
-
 # ======================================================
 # Configuring and building the code:
 # ======================================================
@@ -849,29 +747,6 @@ export OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC -fwrapv"
 export LINKCC="gcc"
 export CFLAGS="$CFLAGS `pkg-config --cflags openssl`"
 export LDFLAGS="$RPM_LD_FLAGS `pkg-config --libs-only-L openssl`"
-
-%if 0%{regenerate_autotooling_patch}
-# If enabled, this code regenerates the patch to "configure", using a
-# local copy of autoconf-2.65, then exits the build
-#
-# The following assumes that the copy is installed to ~/autoconf-2.65/bin
-# as per these instructions:
-#   http://bugs.python.org/issue7997
-
-for f in pyconfig.h.in configure ; do
-    cp $f $f.autotool-intermediates ;
-done
-
-# Rerun the autotools:
-autoreconf
-
-# Regenerate the patch:
-gendiff . .autotool-intermediates > %{PATCH5000}
-
-
-# Exit the build
-exit 1
-%endif
 
 # Define a function, for how to perform a "build" of python for a given
 # configuration:
@@ -1777,6 +1652,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Tue Jan 19 2016 Carl George <carl.george@rackspace.com> - 3.5.1-2.ius
+- Remove COUNT_ALLOCS and autotooling patches per rhbz#1291325 (Fedora)
+
 * Mon Dec 07 2015 Carl George <carl.george@rackspace.com> - 3.5.1-1.ius
 - Latest upstream
 - Refreshed patches: 55 (systemtap)
