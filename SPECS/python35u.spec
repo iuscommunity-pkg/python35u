@@ -1586,7 +1586,7 @@ rm -fr %{buildroot}
 %{_libdir}/libpython3.so
 %endif
 %{_libdir}/libpython%{LDVERSION_optimized}.so
-%{_libdir}/libpython%{LDVERSION_optimized}.so.1.0
+%{_libdir}/%{py_INSTSONAME_optimized}
 %if 0%{?with_systemtap}
 %dir %(dirname %{tapsetdir})
 %dir %{tapsetdir}
@@ -1740,7 +1740,7 @@ rm -fr %{buildroot}
 %{_includedir}/python%{LDVERSION_debug}
 %{_bindir}/python%{LDVERSION_debug}-config
 %{_libdir}/libpython%{LDVERSION_debug}.so
-%{_libdir}/libpython%{LDVERSION_debug}.so.1.0
+%{_libdir}/%{py_INSTSONAME_debug}
 %{_libdir}/pkgconfig/python-%{LDVERSION_debug}.pc
 
 # Analog of the -tools subpackage's files:
