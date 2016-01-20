@@ -454,7 +454,7 @@ Patch188: 00188-fix-lib2to3-tests-when-hashlib-doesnt-compile-properly.patch
 # Add the rewheel module, allowing to recreate wheels from already installed
 # ones
 # https://github.com/bkabrda/rewheel
-%if 0%{with_rewheel}
+%if 0%{?with_rewheel}
 Patch189: 00189-add-rewheel-module.patch
 %endif
 
@@ -511,7 +511,7 @@ Provides: python(abi) = %{pybasever}
 
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 
-%if 0%{with_rewheel}
+%if 0%{?with_rewheel}
 Requires: python%{pyshortver}u-setuptools
 Requires: python%{pyshortver}u-pip
 %endif
@@ -650,7 +650,7 @@ for f in md5module.c sha1module.c sha256module.c sha512module.c; do
     rm Modules/$f
 done
 
-%if 0%{with_rewheel}
+%if 0%{?with_rewheel}
 %global pip_version 7.1.0
 sed -r -i s/'_PIP_VERSION = "[0-9.]+"'/'_PIP_VERSION = "%{pip_version}"'/ Lib/ensurepip/__init__.py
 %endif
@@ -700,7 +700,7 @@ sed -r -i s/'_PIP_VERSION = "[0-9.]+"'/'_PIP_VERSION = "%{pip_version}"'/ Lib/en
 %patch186 -p1
 %patch188 -p1
 
-%if 0%{with_rewheel}
+%if 0%{?with_rewheel}
 %patch189 -p1
 %endif
 
@@ -899,7 +899,7 @@ InstallPython optimized \
 
 install -d -m 0755 ${RPM_BUILD_ROOT}%{pylibdir}/site-packages/__pycache__
 
-%if 0%{main_python3}
+%if 0%{?main_python3}
 mv ${RPM_BUILD_ROOT}%{_bindir}/2to3 ${RPM_BUILD_ROOT}%{_bindir}/2to3-3
 %endif
 
@@ -1078,7 +1078,7 @@ ln -s \
   %{_bindir}/python%{LDVERSION_debug} \
   %{buildroot}%{_bindir}/python%{pybasever}-debug
 
-%if 0%{main_python3}
+%if 0%{?main_python3}
 ln -s \
   %{_bindir}/python%{pybasever}-debug \
   %{buildroot}%{_bindir}/python3-debug
@@ -1178,7 +1178,7 @@ CheckPython() {
   LD_LIBRARY_PATH=$ConfDir $ConfDir/python -m test.regrtest \
     --verbose --findleaks \
     -x test_distutils \
-    %if 0%{!with_rewheel}
+    %if 0%{?with_rewheel}
     -x test_ensurepip \
     -x test_venv \
     %endif
@@ -1196,7 +1196,7 @@ CheckPython() {
 
 }
 
-%if 0%{run_selftest_suite}
+%if 0%{?run_selftest_suite}
 
 # Check each of the configurations:
 %if 0%{?with_debug_build}
