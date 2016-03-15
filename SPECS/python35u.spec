@@ -113,6 +113,11 @@
 %global with_system_expat 0
 %endif
 
+# Bundle latest wheels of setuptools and pip.
+%global with_new_wheels 1
+%global setuptools_version 20.2.2
+%global pip_version 8.1.0
+
 # ==================
 # Top-level metadata
 # ==================
@@ -215,6 +220,9 @@ Source7: pyfuntop.stp
 # Run in check section with Python that is currently being built
 # Written by bkabrda
 Source8: check-pyc-and-pyo-timestamps.py
+
+Source20: https://pypi.python.org/packages/3.5/s/setuptools/setuptools-%{setuptools_version}-py2.py3-none-any.whl
+Source21: https://pypi.python.org/packages/py2.py3/p/pip/pip-%{pip_version}-py2.py3-none-any.whl
 
 # 00001 #
 # Fixup distutils/unixccompiler.py to remove standard library path from rpath:
@@ -610,6 +618,15 @@ rm -r Modules/zlib || exit 1
 for f in md5module.c sha1module.c sha256module.c sha512module.c; do
     rm Modules/$f
 done
+
+%if 0%{?with_new_wheels}
+sed -r \
+  -e '/^_SETUPTOOLS_VERSION =/ s/"[0-9.]+"/"%{setuptools_version}"/' \
+  -e '/^_PIP_VERSION =/ s/"[0-9.]+"/"%{pip_version}"/' \
+  -i Lib/ensurepip/__init__.py
+rm Lib/ensurepip/_bundled/setuptools-*.whl Lib/ensurepip/_bundled/pip-*.whl
+cp -a %{SOURCE20} %{SOURCE21} Lib/ensurepip/_bundled/
+%endif
 
 #
 # Apply patches:
@@ -1578,6 +1595,7 @@ rm -fr %{buildroot}
 %changelog
 * Tue Mar 15 2016 Carl George <carl.george@rackspace.com> - 3.5.1-3.ius
 - Disable and remove rewheel
+- Bundled newer wheels of setuptools and pip
 
 * Tue Jan 19 2016 Carl George <carl.george@rackspace.com> - 3.5.1-2.ius
 - Remove COUNT_ALLOCS and autotooling patches per rhbz#1291325 (Fedora)
