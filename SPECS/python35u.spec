@@ -118,7 +118,6 @@
 # invocation of brp-python-hardlink (since this should still work for python3
 # pyc/pyo files)
 
-
 # expat 2.1.0 added the symbol XML_SetHashSalt without bumping SONAME.  This
 # symbol is used in pyexpat in order to mitigate CVE-2012-0876.  That symbol
 # was backported to el5/el6: https://rhn.redhat.com/errata/RHSA-2012-0731.html
@@ -285,10 +284,6 @@ Patch131: 00131-disable-tests-in-test_io.patch
 # phase below (and which potentially other python-* rpms could set, to reuse
 # these unittest hooks in their own "check" phases)
 Patch132: 00132-add-rpmbuild-hooks-to-unittest.patch
-
-# 00133 #
-# 00133-skip-test_dl.patch is not relevant for python3: the "dl" module no
-# longer exists
 
 # 00137 #
 # Some tests within distutils fail when run in an rpmbuild:
