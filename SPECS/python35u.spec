@@ -2,22 +2,6 @@
 # Conditionals and other variables controlling the build
 # ======================================================
 
-# NOTES ON BOOTSTRAPPING PYTHON 3.5:
-#
-# Due to dependency cycle between Python, pip, setuptools and
-# wheel caused by the rewheel patch, one has to build in the
-# following order:
-#
-# 1) python35u with_rewheel 0
-# 2) python35u-setuptools build_rewheel 0
-# 3) python35u-pip build_rewheel 0
-# 4) python35u-wheel
-# 5) python35u-setuptools build_rewheel 1
-# 6) python35u-pip build_rewheel 1
-# 7) python35u with_rewheel 1
-
-%global with_rewheel 0
-
 # Turn this to 0 to turn off the "check" phase:
 %global run_selftest_suite 1
 
@@ -135,7 +119,7 @@
 Summary: Version 3 of the Python programming language aka Python 3000
 Name: python%{pyshortver}u
 Version: %{pybasever}.1
-Release: 2.ius%{?dist}
+Release: 3.ius%{?dist}
 License: Python
 Group: Development/Languages
 
@@ -192,12 +176,6 @@ BuildRequires: valgrind-devel
 
 BuildRequires: xz-devel
 BuildRequires: zlib-devel
-
-%if 0%{?with_rewheel}
-BuildRequires: python%{pyshortver}u-setuptools
-BuildRequires: python%{pyshortver}u-pip
-%endif
-
 
 # =======================
 # Source code and patches
@@ -445,14 +423,6 @@ Patch186: 00186-dont-raise-from-py_compile.patch
 #   relying on this will fail (test_filename_changing_on_output_single_dir)
 Patch188: 00188-fix-lib2to3-tests-when-hashlib-doesnt-compile-properly.patch
 
-# 00189 #
-# Add the rewheel module, allowing to recreate wheels from already installed
-# ones
-# https://github.com/bkabrda/rewheel
-%if 0%{?with_rewheel}
-Patch189: 00189-add-rewheel-module.patch
-%endif
-
 # 00194 #
 # Tests requiring SIGHUP to work don't work in Koji
 # see rhbz#1088233
@@ -506,10 +476,6 @@ Provides: python(abi) = %{pybasever}
 
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 
-%if 0%{?with_rewheel}
-Requires: python%{pyshortver}u-setuptools
-Requires: python%{pyshortver}u-pip
-%endif
 
 %description
 Python 3 is a new version of the language that is incompatible with the 2.x
@@ -645,11 +611,6 @@ for f in md5module.c sha1module.c sha256module.c sha512module.c; do
     rm Modules/$f
 done
 
-%if 0%{?with_rewheel}
-%global pip_version 7.1.0
-sed -r -i s/'_PIP_VERSION = "[0-9.]+"'/'_PIP_VERSION = "%{pip_version}"'/ Lib/ensurepip/__init__.py
-%endif
-
 #
 # Apply patches:
 #
@@ -694,10 +655,6 @@ sed -r -i s/'_PIP_VERSION = "[0-9.]+"'/'_PIP_VERSION = "%{pip_version}"'/ Lib/en
 %patch184  -p1
 %patch186 -p1
 %patch188 -p1
-
-%if 0%{?with_rewheel}
-%patch189 -p1
-%endif
 
 %patch194 -p1
 %patch196 -p1
@@ -1173,10 +1130,6 @@ CheckPython() {
   LD_LIBRARY_PATH=$ConfDir $ConfDir/python -m test.regrtest \
     --verbose --findleaks \
     -x test_distutils \
-    %if 0%{?with_rewheel}
-    -x test_ensurepip \
-    -x test_venv \
-    %endif
     %if 0%{?rhel} < 7
     -x test_readline \
     %endif
@@ -1357,18 +1310,7 @@ rm -fr %{buildroot}
 %dir %{pylibdir}/ensurepip/__pycache__/
 %{pylibdir}/ensurepip/*.py
 %{pylibdir}/ensurepip/__pycache__/*%{bytecode_suffixes}
-%if 0%{?with_rewheel}
-%exclude %{pylibdir}/ensurepip/_bundled
-%else
 %{pylibdir}/ensurepip/_bundled
-%endif
-
-%if 0%{?with_rewheel}
-%dir %{pylibdir}/ensurepip/rewheel/
-%dir %{pylibdir}/ensurepip/rewheel/__pycache__/
-%{pylibdir}/ensurepip/rewheel/*.py
-%{pylibdir}/ensurepip/rewheel/__pycache__/*%{bytecode_suffixes}
-%endif
 
 %{pylibdir}/html
 %{pylibdir}/http
@@ -1634,6 +1576,9 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Tue Mar 15 2016 Carl George <carl.george@rackspace.com> - 3.5.1-3.ius
+- Disable and remove rewheel
+
 * Tue Jan 19 2016 Carl George <carl.george@rackspace.com> - 3.5.1-2.ius
 - Remove COUNT_ALLOCS and autotooling patches per rhbz#1291325 (Fedora)
 - Drop patch199 (merged upstream)
