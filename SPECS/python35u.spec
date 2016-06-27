@@ -123,8 +123,8 @@
 # ==================
 Summary: Version 3 of the Python programming language aka Python 3000
 Name: python%{pyshortver}u
-Version: %{pybasever}.1
-Release: 3.ius%{?dist}
+Version: %{pybasever}.2
+Release: 1.ius%{?dist}
 License: Python
 Group: Development/Languages
 
@@ -1593,6 +1593,10 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Mon Jun 27 2016 Carl George <carl.george@rackspace.com> - 3.5.2-1.ius
+- Latest upstream
+- Rebase Patch102, Patch146
+
 * Tue Mar 15 2016 Carl George <carl.george@rackspace.com> - 3.5.1-3.ius
 - Disable and remove rewheel
 - Bundled newer wheels of setuptools and pip

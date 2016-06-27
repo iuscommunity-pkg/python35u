@@ -1,6 +1,7 @@
---- Python-3.4.0b1/Lib/hashlib.py.hashlib-fips	2013-11-24 21:36:54.000000000 +0100
-+++ Python-3.4.0b1/Lib/hashlib.py	2013-11-27 11:45:17.073617547 +0100
-@@ -23,6 +23,16 @@
+diff -Naurp a/Lib/hashlib.py b/Lib/hashlib.py
+--- a/Lib/hashlib.py	2016-06-25 16:38:36.000000000 -0500
++++ b/Lib/hashlib.py	2016-06-27 10:18:51.822379137 -0500
+@@ -23,6 +23,16 @@ the zlib module.
  Choose your hash function wisely.  Some have known collision weaknesses.
  sha384 and sha512 will be slow on 32 bit platforms.
  
@@ -17,7 +18,7 @@
  Hash objects have these methods:
   - update(arg): Update the hash object with the bytes in arg. Repeated calls
                  are equivalent to a single call with the concatenation of all
-@@ -63,6 +73,19 @@
+@@ -62,6 +72,19 @@ algorithms_available = set(__always_supp
  __all__ = __always_supported + ('new', 'algorithms_guaranteed',
                                  'algorithms_available', 'pbkdf2_hmac')
  
@@ -37,7 +38,7 @@
  
  __builtin_constructor_cache = {}
  
-@@ -108,34 +131,41 @@
+@@ -100,34 +123,41 @@ def __get_openssl_constructor(name):
          f = getattr(_hashlib, 'openssl_' + name)
          # Allow the C module to raise ValueError.  The function will be
          # defined but the hash not actually available thanks to OpenSSL.
@@ -92,7 +93,7 @@
  try:
      import _hashlib
      new = __hash_new
-@@ -215,7 +245,10 @@
+@@ -207,7 +237,10 @@ for __func_name in __always_supported:
      # try them all, some may not work due to the OpenSSL
      # version not supporting that algorithm.
      try:
@@ -104,14 +105,15 @@
      except ValueError:
          import logging
          logging.exception('code for hash %s was not found.', __func_name)
-@@ -223,3 +256,4 @@
+@@ -215,3 +248,4 @@ for __func_name in __always_supported:
  # Cleanup locals()
  del __always_supported, __func_name, __get_hash
  del __py_new, __hash_new, __get_openssl_constructor
 +del __ignore_usedforsecurity
---- Python-3.4.0b1/Lib/test/test_hashlib.py	2013-11-27 11:55:42.769601363 +0100
-+++ Python-3.4.0b1/Lib/test/test_hashlib.py	2013-11-28 09:33:03.929008508 +0100
-@@ -24,7 +24,22 @@
+diff -Naurp a/Lib/test/test_hashlib.py b/Lib/test/test_hashlib.py
+--- a/Lib/test/test_hashlib.py	2016-06-25 16:38:37.000000000 -0500
++++ b/Lib/test/test_hashlib.py	2016-06-27 10:18:51.823379166 -0500
+@@ -24,7 +24,22 @@ from test.support import _4G, bigmemtest
  COMPILED_WITH_PYDEBUG = hasattr(sys, 'gettotalrefcount')
  
  c_hashlib = import_fresh_module('hashlib', fresh=['_hashlib'])
@@ -135,7 +137,7 @@
  
  def hexstr(s):
      assert isinstance(s, bytes), repr(s)
-@@ -34,6 +49,16 @@
+@@ -34,6 +49,16 @@ def hexstr(s):
          r += h[(i >> 4) & 0xF] + h[i & 0xF]
      return r
  
@@ -152,7 +154,7 @@
  
  class HashLibTestCase(unittest.TestCase):
      supported_hash_names = ( 'md5', 'MD5', 'sha1', 'SHA1',
-@@ -66,11 +91,11 @@
+@@ -63,11 +88,11 @@ class HashLibTestCase(unittest.TestCase)
          # For each algorithm, test the direct constructor and the use
          # of hashlib.new given the algorithm name.
          for algorithm, constructors in self.constructors_to_test.items():
@@ -167,7 +169,7 @@
              constructors.add(_test_algorithm_via_hashlib_new)
  
          _hashlib = self._conditional_import_module('_hashlib')
-@@ -82,26 +107,12 @@
+@@ -79,26 +104,12 @@ class HashLibTestCase(unittest.TestCase)
              for algorithm, constructors in self.constructors_to_test.items():
                  constructor = getattr(_hashlib, 'openssl_'+algorithm, None)
                  if constructor:
@@ -195,7 +197,7 @@
  
          super(HashLibTestCase, self).__init__(*args, **kwargs)
  
-@@ -157,9 +169,6 @@
+@@ -148,9 +159,6 @@ class HashLibTestCase(unittest.TestCase)
              else:
                  del sys.modules['_md5']
          self.assertRaises(TypeError, get_builtin_constructor, 3)
@@ -205,7 +207,7 @@
  
      def test_hexdigest(self):
          for cons in self.hash_constructors:
-@@ -558,6 +567,65 @@
+@@ -433,6 +441,65 @@ class HashLibTestCase(unittest.TestCase)
  
          self.assertEqual(expected_hash, hasher.hexdigest())
  
@@ -271,17 +273,18 @@
  
  class KDFTests(unittest.TestCase):
  
-@@ -639,6 +707,7 @@
-         with self.assertRaisesRegex(ValueError, 'unsupported hash type'):
-             pbkdf2('unknown', b'pass', b'salt', 1)
+@@ -517,6 +584,7 @@ class KDFTests(unittest.TestCase):
+             iterations=1, dklen=None)
+         self.assertEqual(out, self.pbkdf2_results['sha1'][0][0])
  
 +    @unittest.skip('skipped on Fedora, as we always use OpenSSL pbkdf2_hmac')
      def test_pbkdf2_hmac_py(self):
          self._test_pbkdf2_hmac(py_hashlib.pbkdf2_hmac)
  
---- Python-3.4.0b1/Modules/_hashopenssl.c.hashlib-fips	2013-11-24 21:36:56.000000000 +0100
-+++ Python-3.4.0b1/Modules/_hashopenssl.c	2013-11-27 12:01:57.443537463 +0100
-@@ -19,6 +19,8 @@
+diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
+--- a/Modules/_hashopenssl.c	2016-06-25 16:38:38.000000000 -0500
++++ b/Modules/_hashopenssl.c	2016-06-27 10:18:51.824379195 -0500
+@@ -20,6 +20,8 @@
  
  
  /* EVP is the preferred interface to hashing in OpenSSL */
@@ -290,7 +293,7 @@
  #include <openssl/evp.h>
  #include <openssl/hmac.h>
  /* We use the object interface to discover what hashes OpenSSL supports. */
-@@ -48,11 +50,19 @@
+@@ -45,11 +47,19 @@ typedef struct {
  
  static PyTypeObject EVPtype;
  
@@ -314,7 +317,7 @@
  
  DEFINE_CONSTS_FOR_NEW(md5)
  DEFINE_CONSTS_FOR_NEW(sha1)
-@@ -97,6 +107,48 @@
+@@ -92,6 +102,48 @@ EVP_hash(EVPobject *self, const void *vp
      }
  }
  
@@ -363,7 +366,7 @@
  /* Internal methods for a hash object */
  
  static void
-@@ -281,15 +333,16 @@
+@@ -259,15 +311,16 @@ EVP_repr(EVPobject *self)
  static int
  EVP_tp_init(EVPobject *self, PyObject *args, PyObject *kwds)
  {
@@ -383,7 +386,7 @@
          return -1;
      }
  
-@@ -310,7 +363,12 @@
+@@ -288,7 +341,12 @@ EVP_tp_init(EVPobject *self, PyObject *a
              PyBuffer_Release(&view);
          return -1;
      }
@@ -397,7 +400,7 @@
  
      self->name = name_obj;
      Py_INCREF(self->name);
-@@ -394,7 +452,8 @@
+@@ -372,7 +430,8 @@ static PyTypeObject EVPtype = {
  static PyObject *
  EVPnew(PyObject *name_obj,
         const EVP_MD *digest, const EVP_MD_CTX *initial_ctx,
@@ -407,7 +410,7 @@
  {
      EVPobject *self;
  
-@@ -409,7 +468,12 @@
+@@ -387,7 +446,12 @@ EVPnew(PyObject *name_obj,
      if (initial_ctx) {
          EVP_MD_CTX_copy(&self->ctx, initial_ctx);
      } else {
@@ -421,7 +424,7 @@
      }
  
      if (cp && len) {
-@@ -433,21 +497,29 @@
+@@ -411,21 +475,29 @@ PyDoc_STRVAR(EVP_new__doc__,
  An optional string argument may be provided and will be\n\
  automatically hashed.\n\
  \n\
@@ -455,7 +458,7 @@
          return NULL;
      }
  
-@@ -461,7 +533,8 @@
+@@ -439,7 +511,8 @@ EVP_new(PyObject *self, PyObject *args,
  
      digest = EVP_get_digestbyname(name);
  
@@ -465,7 +468,7 @@
  
      if (data_obj)
          PyBuffer_Release(&view);
-@@ -742,57 +815,115 @@
+@@ -722,57 +795,115 @@ generate_hash_name_list(void)
  
  
  /*
@@ -618,7 +621,7 @@
  
  GEN_CONSTRUCTOR(md5)
  GEN_CONSTRUCTOR(sha1)
-@@ -843,13 +974,10 @@
+@@ -819,13 +950,10 @@ PyInit__hashlib(void)
  {
      PyObject *m, *openssl_md_meth_names;
  
