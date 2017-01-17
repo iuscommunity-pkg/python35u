@@ -123,7 +123,7 @@
 # ==================
 Summary: Version 3 of the Python programming language aka Python 3000
 Name: python%{pyshortver}u
-Version: %{pybasever}.2
+Version: %{pybasever}.3
 Release: 1.ius%{?dist}
 License: Python
 Group: Development/Languages
@@ -182,11 +182,12 @@ BuildRequires: valgrind-devel
 BuildRequires: xz-devel
 BuildRequires: zlib-devel
 
+
 # =======================
 # Source code and patches
 # =======================
 
-Source: http://www.python.org/ftp/python/%{version}/Python-%{version}.tar.xz
+Source: https://www.python.org/ftp/python/%{version}/Python-%{version}.tar.xz
 
 # Avoid having various bogus auto-generated Provides lines for the various
 # python c modules' SONAMEs:
@@ -399,14 +400,6 @@ Patch179: 00179-dont-raise-error-on-gdb-corrupted-frames-in-backtrace.patch
 # Not appropriate for upstream, Fedora-specific naming
 Patch180: 00180-python-add-support-for-ppc64p7.patch
 
-# 00184 #
-# Fix for https://bugzilla.redhat.com/show_bug.cgi?id=979696
-# Fixes build of ctypes against libffi with multilib wrapper
-# Python recognizes ffi.h only if it contains "#define LIBFFI_H",
-# but the wrapper doesn't contain that, which makes the build fail
-# We patch this by also accepting "#define ffi_wrapper_h"
-Patch184: 00184-ctypes-should-build-with-libffi-multilib-wrapper.patch
-
 # 00186 #
 # Fix for https://bugzilla.redhat.com/show_bug.cgi?id=1023607
 # Previously, this fixed a problem where some *.py files were not being
@@ -452,10 +445,6 @@ Patch200: 00200-gettext-plural-fix.patch
 # Note: Backported from scl
 Patch201: 00201-fix-memory-leak-in-gdbm.patch
 
-# 00203 #
-# test_threading fails in koji dues to it's handling of signals
-Patch203: 00203-disable-threading-test-koji.patch
-
 # 00205 #
 # LIBPL variable in makefile takes LIBPL from configure.ac
 # but the LIBPL variable defined there doesn't respect libdir macro
@@ -466,18 +455,12 @@ Patch205: 00205-make-libpl-respect-lib64.patch
 # by debian but fedora infra uses only eabi without hf
 Patch206: 00206-remove-hf-from-arm-triplet.patch
 
-# 00400 #
-# New in 3.5, but described as "fragile" by upstream.  Skip for now.
-# https://bugs.python.org/issue22599
-Patch400: 00400-disable-finalization-tests.patch
-
-BuildRoot: %{_tmppath}/%{name}-%{version}-root
 
 # ======================================================
 # Additional metadata, and subpackages
 # ======================================================
 
-URL: http://www.python.org/
+URL: https://www.python.org/
 
 # See notes in bug 532118:
 Provides: python(abi) = %{pybasever}
@@ -669,16 +652,13 @@ cp -a %{SOURCE20} %{SOURCE21} Lib/ensurepip/_bundled/
 %patch178 -p1
 %patch179 -p1
 %patch180 -p1
-%patch184  -p1
 %patch186 -p1
 %patch188 -p1
 
 %patch194 -p1
 %patch196 -p1
-%patch203 -p1
 %patch205 -p1
 %patch206 -p1
-%patch400 -p1
 
 # Currently (2010-01-15), http://docs.python.org/library is for 2.6, and there
 # are many differences between 2.6 and the Python 3 library.
@@ -1173,21 +1153,12 @@ CheckPython optimized
 
 
 # ======================================================
-# Cleaning up
-# ======================================================
-
-%clean
-rm -fr %{buildroot}
-
-
-# ======================================================
 # Scriptlets
 # ======================================================
 
 %post libs -p /sbin/ldconfig
 
 %postun libs -p /sbin/ldconfig
-
 
 
 %files
@@ -1593,6 +1564,11 @@ rm -fr %{buildroot}
 # ======================================================
 
 %changelog
+* Tue Jan 17 2017 Carl George <carl.george@rackspace.com> - 3.5.3-1.ius
+- Latest upstream
+- Rebase patch55, patch146, patch180
+- Remove patch184, patch203, patch400 (resolved upstream)
+
 * Mon Jun 27 2016 Carl George <carl.george@rackspace.com> - 3.5.2-1.ius
 - Latest upstream
 - Rebase Patch102, Patch146

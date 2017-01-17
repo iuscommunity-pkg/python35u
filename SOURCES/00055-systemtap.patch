@@ -1,6 +1,6 @@
 diff -Naurp a/configure b/configure
---- a/configure	2015-12-06 19:39:11.000000000 -0600
-+++ b/configure	2015-12-07 09:58:21.783186794 -0600
+--- a/configure	2017-01-17 01:57:54.000000000 -0600
++++ b/configure	2017-01-17 10:30:05.036907740 -0600
 @@ -642,6 +642,8 @@ TRUE
  MACHDEP_OBJS
  DYNLOADFILE
@@ -10,7 +10,7 @@ diff -Naurp a/configure b/configure
  THREADOBJ
  LDLAST
  USE_THREAD_MODULE
-@@ -824,6 +826,7 @@ with_doc_strings
+@@ -835,6 +837,7 @@ with_doc_strings
  with_tsc
  with_pymalloc
  with_valgrind
@@ -18,7 +18,7 @@ diff -Naurp a/configure b/configure
  with_fpectl
  with_libm
  with_libc
-@@ -1512,6 +1515,7 @@ Optional Packages:
+@@ -1540,6 +1543,7 @@ Optional Packages:
    --with(out)-tsc         enable/disable timestamp counter profile
    --with(out)-pymalloc    disable/enable specialized mallocs
    --with-valgrind         Enable Valgrind support
@@ -26,7 +26,7 @@ diff -Naurp a/configure b/configure
    --with-fpectl           enable SIGFPE catching
    --with-libm=STRING      math library
    --with-libc=STRING      C library
-@@ -10866,6 +10870,31 @@ fi
+@@ -11181,6 +11185,31 @@ fi
      OPT="-DDYNAMIC_ANNOTATIONS_ENABLED=1 $OPT"
  fi
  
@@ -59,9 +59,9 @@ diff -Naurp a/configure b/configure
  
  DLINCLDIR=.
 diff -Naurp a/configure.ac b/configure.ac
---- a/configure.ac	2015-12-06 19:39:11.000000000 -0600
-+++ b/configure.ac	2015-12-07 09:58:21.773187154 -0600
-@@ -3129,6 +3129,23 @@ if test "$with_valgrind" != no; then
+--- a/configure.ac	2017-01-17 01:57:54.000000000 -0600
++++ b/configure.ac	2017-01-17 10:30:05.037907758 -0600
+@@ -3277,6 +3277,23 @@ if test "$with_valgrind" != no; then
      OPT="-DDYNAMIC_ANNOTATIONS_ENABLED=1 $OPT"
  fi
  
@@ -86,9 +86,9 @@ diff -Naurp a/configure.ac b/configure.ac
  AC_SUBST(DLINCLDIR)
  DLINCLDIR=.
 diff -Naurp a/Doc/howto/index.rst b/Doc/howto/index.rst
---- a/Doc/howto/index.rst	2015-12-06 19:39:07.000000000 -0600
-+++ b/Doc/howto/index.rst	2015-12-07 09:58:21.783186794 -0600
-@@ -29,4 +29,5 @@ Currently, the HOWTOs are:
+--- a/Doc/howto/index.rst	2017-01-17 01:57:47.000000000 -0600
++++ b/Doc/howto/index.rst	2017-01-17 10:30:05.037907758 -0600
+@@ -28,4 +28,5 @@ Currently, the HOWTOs are:
     argparse.rst
     ipaddress.rst
     clinic.rst
@@ -96,7 +96,7 @@ diff -Naurp a/Doc/howto/index.rst b/Doc/howto/index.rst
  
 diff -Naurp a/Doc/howto/instrumentation.rst b/Doc/howto/instrumentation.rst
 --- a/Doc/howto/instrumentation.rst	1969-12-31 18:00:00.000000000 -0600
-+++ b/Doc/howto/instrumentation.rst	2015-12-07 09:58:21.784186758 -0600
++++ b/Doc/howto/instrumentation.rst	2017-01-17 10:30:05.037907758 -0600
 @@ -0,0 +1,295 @@
 +.. _instrumentation:
 +
@@ -395,7 +395,7 @@ diff -Naurp a/Doc/howto/instrumentation.rst b/Doc/howto/instrumentation.rst
 +
 diff -Naurp a/Lib/test/test_systemtap.py b/Lib/test/test_systemtap.py
 --- a/Lib/test/test_systemtap.py	1969-12-31 18:00:00.000000000 -0600
-+++ b/Lib/test/test_systemtap.py	2015-12-07 09:58:21.784186758 -0600
++++ b/Lib/test/test_systemtap.py	2017-01-17 10:30:05.037907758 -0600
 @@ -0,0 +1,234 @@
 +# Verify that systemtap static probes work
 +#
@@ -632,9 +632,9 @@ diff -Naurp a/Lib/test/test_systemtap.py b/Lib/test/test_systemtap.py
 +if __name__ == "__main__":
 +    test_main()
 diff -Naurp a/Makefile.pre.in b/Makefile.pre.in
---- a/Makefile.pre.in	2015-12-06 19:39:09.000000000 -0600
-+++ b/Makefile.pre.in	2015-12-07 09:59:27.372821105 -0600
-@@ -411,6 +411,7 @@ PYTHON_OBJS=	\
+--- a/Makefile.pre.in	2017-01-17 01:57:52.000000000 -0600
++++ b/Makefile.pre.in	2017-01-17 10:31:12.009089378 -0600
+@@ -415,6 +415,7 @@ PYTHON_OBJS=	\
  		Python/formatter_unicode.o \
  		Python/fileutils.o \
  		Python/$(DYNLOADFILE) \
@@ -642,9 +642,9 @@ diff -Naurp a/Makefile.pre.in b/Makefile.pre.in
  		$(LIBOBJS) \
  		$(MACHDEP_OBJS) \
  		$(THREADOBJ)
-@@ -860,7 +861,8 @@ Objects/setobject.o: $(srcdir)/Objects/s
+@@ -868,7 +869,8 @@ Objects/setobject.o: $(srcdir)/Objects/s
  $(OPCODETARGETS_H): $(OPCODETARGETGEN_FILES)
- 	$(OPCODETARGETGEN) $(OPCODETARGETS_H)
+ 	$(PYTHON_FOR_GEN) $(OPCODETARGETGEN) $(OPCODETARGETS_H)
  
 -Python/ceval.o: $(OPCODETARGETS_H) $(srcdir)/Python/ceval_gil.h
 +Python/ceval.o: $(OPCODETARGETS_H) $(srcdir)/Python/ceval_gil.h \
@@ -652,9 +652,9 @@ diff -Naurp a/Makefile.pre.in b/Makefile.pre.in
  
  Python/frozen.o: Python/importlib.h Python/importlib_external.h
  
-@@ -868,6 +870,13 @@ Objects/typeobject.o: Objects/typeslots.
+@@ -876,6 +878,13 @@ Objects/typeobject.o: Objects/typeslots.
  Objects/typeslots.inc: $(srcdir)/Include/typeslots.h $(srcdir)/Objects/typeslots.py
- 	$(PYTHON) $(srcdir)/Objects/typeslots.py < $(srcdir)/Include/typeslots.h > Objects/typeslots.inc
+ 	$(PYTHON_FOR_GEN) $(srcdir)/Objects/typeslots.py < $(srcdir)/Include/typeslots.h Objects/typeslots.inc
  
 +# Only needed with --with-systemtap; not a public header:
 +$(srcdir)/Python/pysystemtap.h: $(srcdir)/Python/pysystemtap.d
@@ -666,18 +666,18 @@ diff -Naurp a/Makefile.pre.in b/Makefile.pre.in
  ############################################################################
  # Header files
  
-@@ -1584,6 +1593,7 @@ clean: pycremoval
+@@ -1597,6 +1606,7 @@ clean: pycremoval
  	-rm -f Lib/lib2to3/*Grammar*.pickle
  	-rm -f Programs/_testembed Programs/_freeze_importlib
- 	-rm -rf build
+ 	-find build -type f -a ! -name '*.gc??' -exec rm -f {} ';'
 +	-rm -f $(srcdir)/Python/pysystemtap.h
  
  profile-removal:
  	find . -name '*.gc??' -exec rm -f {} ';'
 diff -Naurp a/pyconfig.h.in b/pyconfig.h.in
---- a/pyconfig.h.in	2015-12-06 19:39:11.000000000 -0600
-+++ b/pyconfig.h.in	2015-12-07 09:58:21.785186722 -0600
-@@ -1373,6 +1373,9 @@
+--- a/pyconfig.h.in	2017-01-17 01:57:54.000000000 -0600
++++ b/pyconfig.h.in	2017-01-17 10:30:05.038907775 -0600
+@@ -1375,6 +1375,9 @@
  /* Define if you want to compile in Python-specific mallocs */
  #undef WITH_PYMALLOC
  
@@ -688,8 +688,8 @@ diff -Naurp a/pyconfig.h.in b/pyconfig.h.in
  #undef WITH_THREAD
  
 diff -Naurp a/Python/ceval.c b/Python/ceval.c
---- a/Python/ceval.c	2015-12-06 19:39:11.000000000 -0600
-+++ b/Python/ceval.c	2015-12-07 09:58:21.787186650 -0600
+--- a/Python/ceval.c	2017-01-17 01:57:53.000000000 -0600
++++ b/Python/ceval.c	2017-01-17 10:30:05.039907793 -0600
 @@ -20,6 +20,8 @@
  
  #include <ctype.h>
@@ -710,7 +710,7 @@ diff -Naurp a/Python/ceval.c b/Python/ceval.c
      co = f->f_code;
      names = co->co_names;
      consts = co->co_consts;
-@@ -3573,6 +3579,11 @@ fast_yield:
+@@ -3640,6 +3646,11 @@ fast_yield:
  
      /* pop frame */
  exit_eval_frame:
@@ -724,7 +724,7 @@ diff -Naurp a/Python/ceval.c b/Python/ceval.c
      tstate->frame = f->f_back;
 diff -Naurp a/Python/ceval_systemtap.h b/Python/ceval_systemtap.h
 --- a/Python/ceval_systemtap.h	1969-12-31 18:00:00.000000000 -0600
-+++ b/Python/ceval_systemtap.h	2015-12-07 09:58:21.787186650 -0600
++++ b/Python/ceval_systemtap.h	2017-01-17 10:30:05.039907793 -0600
 @@ -0,0 +1,86 @@
 +/*
 +  Support for SystemTap static markers  
@@ -814,7 +814,7 @@ diff -Naurp a/Python/ceval_systemtap.h b/Python/ceval_systemtap.h
 +#endif
 diff -Naurp a/Python/pysystemtap.d b/Python/pysystemtap.d
 --- a/Python/pysystemtap.d	1969-12-31 18:00:00.000000000 -0600
-+++ b/Python/pysystemtap.d	2015-12-07 09:58:21.787186650 -0600
++++ b/Python/pysystemtap.d	2017-01-17 10:30:05.040907811 -0600
 @@ -0,0 +1,4 @@
 +provider python {
 +    probe function__entry(const char *, const char *, int, PyFrameObject *);

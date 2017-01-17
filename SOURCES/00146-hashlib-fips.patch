@@ -1,6 +1,6 @@
 diff -Naurp a/Lib/hashlib.py b/Lib/hashlib.py
---- a/Lib/hashlib.py	2016-06-25 16:38:36.000000000 -0500
-+++ b/Lib/hashlib.py	2016-06-27 10:18:51.822379137 -0500
+--- a/Lib/hashlib.py	2017-01-17 01:57:49.000000000 -0600
++++ b/Lib/hashlib.py	2017-01-17 10:43:59.512630956 -0600
 @@ -23,6 +23,16 @@ the zlib module.
  Choose your hash function wisely.  Some have known collision weaknesses.
  sha384 and sha512 will be slow on 32 bit platforms.
@@ -111,8 +111,8 @@ diff -Naurp a/Lib/hashlib.py b/Lib/hashlib.py
  del __py_new, __hash_new, __get_openssl_constructor
 +del __ignore_usedforsecurity
 diff -Naurp a/Lib/test/test_hashlib.py b/Lib/test/test_hashlib.py
---- a/Lib/test/test_hashlib.py	2016-06-25 16:38:37.000000000 -0500
-+++ b/Lib/test/test_hashlib.py	2016-06-27 10:18:51.823379166 -0500
+--- a/Lib/test/test_hashlib.py	2017-01-17 01:57:50.000000000 -0600
++++ b/Lib/test/test_hashlib.py	2017-01-17 10:43:59.512630956 -0600
 @@ -24,7 +24,22 @@ from test.support import _4G, bigmemtest
  COMPILED_WITH_PYDEBUG = hasattr(sys, 'gettotalrefcount')
  
@@ -282,8 +282,8 @@ diff -Naurp a/Lib/test/test_hashlib.py b/Lib/test/test_hashlib.py
          self._test_pbkdf2_hmac(py_hashlib.pbkdf2_hmac)
  
 diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
---- a/Modules/_hashopenssl.c	2016-06-25 16:38:38.000000000 -0500
-+++ b/Modules/_hashopenssl.c	2016-06-27 10:18:51.824379195 -0500
+--- a/Modules/_hashopenssl.c	2017-01-17 01:57:52.000000000 -0600
++++ b/Modules/_hashopenssl.c	2017-01-17 11:05:43.810656906 -0600
 @@ -20,6 +20,8 @@
  
  
@@ -291,9 +291,9 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
 +#include <openssl/ssl.h>
 +#include <openssl/err.h>
  #include <openssl/evp.h>
- #include <openssl/hmac.h>
  /* We use the object interface to discover what hashes OpenSSL supports. */
-@@ -45,11 +47,19 @@ typedef struct {
+ #include <openssl/objects.h>
+@@ -55,10 +57,19 @@ typedef struct {
  
  static PyTypeObject EVPtype;
  
@@ -308,16 +308,14 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
 +    PyObject *error_msgs[2];
 +} EVPCachedInfo;
  
--#define DEFINE_CONSTS_FOR_NEW(Name)  \
+ #define DEFINE_CONSTS_FOR_NEW(Name)  \
 -    static PyObject *CONST_ ## Name ## _name_obj = NULL; \
--    static EVP_MD_CTX CONST_new_ ## Name ## _ctx; \
 -    static EVP_MD_CTX *CONST_new_ ## Name ## _ctx_p = NULL;
-+#define DEFINE_CONSTS_FOR_NEW(Name) \
 +    static EVPCachedInfo cached_info_ ##Name;
  
  DEFINE_CONSTS_FOR_NEW(md5)
  DEFINE_CONSTS_FOR_NEW(sha1)
-@@ -92,6 +102,48 @@ EVP_hash(EVPobject *self, const void *vp
+@@ -139,6 +150,48 @@ EVP_hash(EVPobject *self, const void *vp
      }
  }
  
@@ -366,7 +364,7 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
  /* Internal methods for a hash object */
  
  static void
-@@ -259,15 +311,16 @@ EVP_repr(EVPobject *self)
+@@ -327,15 +380,16 @@ EVP_repr(EVPobject *self)
  static int
  EVP_tp_init(EVPobject *self, PyObject *args, PyObject *kwds)
  {
@@ -386,13 +384,13 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
          return -1;
      }
  
-@@ -288,7 +341,12 @@ EVP_tp_init(EVPobject *self, PyObject *a
+@@ -356,7 +410,12 @@ EVP_tp_init(EVPobject *self, PyObject *a
              PyBuffer_Release(&view);
          return -1;
      }
--    EVP_DigestInit(&self->ctx, digest);
-+    mc_ctx_init(&self->ctx, usedforsecurity);
-+    if (!EVP_DigestInit_ex(&self->ctx, digest, NULL)) {
+-    EVP_DigestInit(self->ctx, digest);
++    mc_ctx_init(self->ctx, usedforsecurity);
++    if (!EVP_DigestInit_ex(self->ctx, digest, NULL)) {
 +        set_evp_exception();
 +        PyBuffer_Release(&view);
 +        return -1;
@@ -400,7 +398,7 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
  
      self->name = name_obj;
      Py_INCREF(self->name);
-@@ -372,7 +430,8 @@ static PyTypeObject EVPtype = {
+@@ -440,7 +499,8 @@ static PyTypeObject EVPtype = {
  static PyObject *
  EVPnew(PyObject *name_obj,
         const EVP_MD *digest, const EVP_MD_CTX *initial_ctx,
@@ -410,13 +408,13 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
  {
      EVPobject *self;
  
-@@ -387,7 +446,12 @@ EVPnew(PyObject *name_obj,
+@@ -455,7 +515,12 @@ EVPnew(PyObject *name_obj,
      if (initial_ctx) {
-         EVP_MD_CTX_copy(&self->ctx, initial_ctx);
+         EVP_MD_CTX_copy(self->ctx, initial_ctx);
      } else {
--        EVP_DigestInit(&self->ctx, digest);
-+        mc_ctx_init(&self->ctx, usedforsecurity);
-+        if (!EVP_DigestInit_ex(&self->ctx, digest, NULL)) {
+-        EVP_DigestInit(self->ctx, digest);
++        mc_ctx_init(self->ctx, usedforsecurity);
++        if (!EVP_DigestInit_ex(self->ctx, digest, NULL)) {
 +            set_evp_exception();
 +            Py_DECREF(self);
 +            return NULL;
@@ -424,7 +422,7 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
      }
  
      if (cp && len) {
-@@ -411,21 +475,29 @@ PyDoc_STRVAR(EVP_new__doc__,
+@@ -479,21 +544,29 @@ PyDoc_STRVAR(EVP_new__doc__,
  An optional string argument may be provided and will be\n\
  automatically hashed.\n\
  \n\
@@ -458,7 +456,7 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
          return NULL;
      }
  
-@@ -439,7 +511,8 @@ EVP_new(PyObject *self, PyObject *args,
+@@ -507,7 +580,8 @@ EVP_new(PyObject *self, PyObject *args,
  
      digest = EVP_get_digestbyname(name);
  
@@ -468,13 +466,13 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
  
      if (data_obj)
          PyBuffer_Release(&view);
-@@ -722,57 +795,115 @@ generate_hash_name_list(void)
+@@ -769,57 +843,114 @@ generate_hash_name_list(void)
  
  
  /*
 - *  This macro generates constructor function definitions for specific
 - *  hash algorithms.  These constructors are much faster than calling
-- *  the generic one passing it a python string and are noticably
+- *  the generic one passing it a python string and are noticeably
 - *  faster than calling a python new() wrapper.  Thats important for
 + *  This macro and function generates a family of constructor function
 + *  definitions for specific hash algorithms.  These constructors are much
@@ -485,7 +483,7 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
  #define GEN_CONSTRUCTOR(NAME)  \
      static PyObject * \
 -    EVP_new_ ## NAME (PyObject *self, PyObject *args) \
-+    EVP_new_ ## NAME (PyObject *self, PyObject *args, PyObject *kwdict)        \
++    EVP_new_ ## NAME (PyObject *self, PyObject *args, PyObject *kwdict) \
      { \
 -        PyObject *data_obj = NULL; \
 -        Py_buffer view = { 0 }; \
@@ -511,8 +509,8 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
 +       return implement_specific_EVP_new(self, args, kwdict,      \
 +                                         "|Oi:" #NAME,            \
 +                                         &cached_info_ ## NAME ); \
-+    }
-+
+     }
+ 
 +static PyObject *
 +implement_specific_EVP_new(PyObject *self, PyObject *args, PyObject *kwdict,
 +                           const char *format,
@@ -557,8 +555,8 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
 +        } else {
 +            PyErr_SetString(PyExc_ValueError, "Error initializing hash");
 +        }
-     }
- 
++    }
++
 +    if (data_obj)
 +        PyBuffer_Release(&view);
 +
@@ -580,7 +578,7 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
 -    if (CONST_ ## NAME ## _name_obj == NULL) { \
 -        CONST_ ## NAME ## _name_obj = PyUnicode_FromString(#NAME); \
 -        if (EVP_get_digestbyname(#NAME)) { \
--            CONST_new_ ## NAME ## _ctx_p = &CONST_new_ ## NAME ## _ctx; \
+-            CONST_new_ ## NAME ## _ctx_p = EVP_MD_CTX_new(); \
 -            EVP_DigestInit(CONST_new_ ## NAME ## _ctx_p, EVP_get_digestbyname(#NAME)); \
 -        } \
 -    } \
@@ -617,11 +615,10 @@ diff -Naurp a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
 +        }
 +    }
 +}
-+
  
  GEN_CONSTRUCTOR(md5)
  GEN_CONSTRUCTOR(sha1)
-@@ -819,13 +950,10 @@ PyInit__hashlib(void)
+@@ -866,13 +997,10 @@ PyInit__hashlib(void)
  {
      PyObject *m, *openssl_md_meth_names;
  
