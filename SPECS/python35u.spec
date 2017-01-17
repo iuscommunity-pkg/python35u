@@ -10,17 +10,6 @@
 # pybasever without the dot:
 %global pyshortver 35
 
-# This macro controls whether we are doing an install or altinstall.
-%global main_python3 0
-
-%if 0%{?rhel} >= 7
-%global _brpdir /usr/lib/rpm
-%global _macrosdir %{_rpmconfigdir}/macros.d
-%else
-%global _brpdir /usr/lib/rpm/redhat
-%global _macrosdir %{_sysconfdir}/rpm
-%endif
-
 %global pylibdir %{_libdir}/python%{pybasever}
 %global dynload_dir %{pylibdir}/lib-dynload
 
@@ -93,25 +82,14 @@
 # (/usr/bin/python, rather than the freshly built python), thus leading to
 # numerous syntax errors, and incorrect magic numbers in the .pyc files.  We
 # thus override __os_install_post to avoid invoking this script:
-%global __os_install_post %{_brpdir}/brp-compress \
-  %{!?__debug_package:%{_brpdir}/brp-strip %{__strip}} \
-  %{_brpdir}/brp-strip-static-archive %{__strip} \
-  %{_brpdir}/brp-strip-comment-note %{__strip} %{__objdump} \
-  %{_brpdir}/brp-python-hardlink
+%global __os_install_post /usr/lib/rpm/brp-compress \
+  %{!?__debug_package:/usr/lib/rpm/brp-strip %{__strip}} \
+  /usr/lib/rpm/brp-strip-static-archive %{__strip} \
+  /usr/lib/rpm/brp-strip-comment-note %{__strip} %{__objdump} \
+  /usr/lib/rpm/%{?el6:redhat/}brp-python-hardlink
 # to remove the invocation of brp-python-bytecompile, whilst keeping the
 # invocation of brp-python-hardlink (since this should still work for python3
 # pyc/pyo files)
-
-# expat 2.1.0 added the symbol XML_SetHashSalt without bumping SONAME.  This
-# symbol is used in pyexpat in order to mitigate CVE-2012-0876.  That symbol
-# was backported to el5/el6: https://rhn.redhat.com/errata/RHSA-2012-0731.html
-# However, el5's expat is missing other symbols that cause the build to fail.
-# We'll use the bundled expat on el5, and stock expat on el6.
-%if 0%{?rhel} >= 6
-%global with_system_expat 1
-%else
-%global with_system_expat 0
-%endif
 
 # Bundle latest wheels of setuptools and pip.
 #global setuptools_version 28.8.0
@@ -141,8 +119,14 @@ BuildRequires: bzip2
 BuildRequires: bzip2-devel
 BuildRequires: db4-devel >= 4.7
 
-%if 0%{?with_system_expat}
-BuildRequires: expat-devel
+# expat 2.1.0 added the symbol XML_SetHashSalt without bumping SONAME.  We use
+# it (in pyexpat) in order to enable the fix in Python-3.2.3 for CVE-2012-0876:
+%if 0%{?rhel} && 0%{?rhel} < 7
+# XML_SetHashSalt was backported to EL6
+# https://rhn.redhat.com/errata/RHSA-2012-0731.html
+BuildRequires: expat-devel >= 2.0.1-11
+%else
+BuildRequires: expat-devel >= 2.1.0
 %endif
 
 BuildRequires: findutils
@@ -483,8 +467,16 @@ Summary:        Python 3 runtime libraries
 Group:          Development/Libraries
 #Requires:       %{name} = %{version}-%{release}
 
-%if 0%{?with_system_expat}
-Requires: expat
+# expat 2.1.0 added the symbol XML_SetHashSalt without bumping SONAME.  We use
+# this symbol (in pyexpat), so we must explicitly state this dependency to
+# prevent "import pyexpat" from failing with a linker error if someone hasn't
+# yet upgraded expat:
+%if 0%{?rhel} && 0%{?rhel} < 7
+# XML_SetHashSalt was backported to EL6
+# https://rhn.redhat.com/errata/RHSA-2012-0731.html
+Requires: expat >= 2.0.1-11
+%else
+Requires: expat >= 2.1.0
 %endif
 
 %description libs
@@ -566,6 +558,7 @@ suffix ("foo_d.so" rather than "foo.so") so that each Python 3 implementation
 can load its own extensions.
 %endif # with_debug_build
 
+
 # ======================================================
 # The prep phase of the build:
 # ======================================================
@@ -583,9 +576,7 @@ cp -a %{SOURCE7} .
 # Ensure that we're using the system copy of various libraries, rather than
 # copies shipped by upstream in the tarball:
 #   Remove embedded copy of expat:
-%if 0%{?with_system_expat}
 rm -r Modules/expat || exit 1
-%endif
 
 #   Remove embedded copy of libffi:
 for SUBDIR in darwin libffi libffi_arm_wince libffi_msvc libffi_osx ; do
@@ -676,6 +667,7 @@ sed --in-place \
     --expression="s|http://docs.python.org/library|http://docs.python.org/%{pybasever}/library|g" \
     Lib/pydoc.py || exit 1
 
+
 # ======================================================
 # Configuring and building the code:
 # ======================================================
@@ -715,9 +707,7 @@ BuildPython() {
   --enable-shared \
   --with-computed-gotos=%{with_computed_gotos} \
   --with-dbmliborder=gdbm:ndbm:bdb \
-%if 0%{?with_system_expat}
   --with-system-expat \
-%endif
   --with-system-ffi \
   --enable-loadable-sqlite-extensions \
 %if 0%{?with_systemtap}
@@ -765,6 +755,7 @@ BuildPython optimized \
   "--without-ensurepip" \
   true
 
+
 # ======================================================
 # Installing the built code:
 # ======================================================
@@ -787,12 +778,7 @@ InstallPython() {
 
   pushd $ConfDir
 
-%if 0%{?main_python3}
-make install \
-%else
-make altinstall \
-%endif
-  DESTDIR=%{buildroot} INSTALL="install -p" EXTRA_CFLAGS="$MoreCFlags"
+make altinstall DESTDIR=%{buildroot} INSTALL="install -p" EXTRA_CFLAGS="$MoreCFlags"
 
   popd
 
@@ -838,13 +824,11 @@ InstallPython debug \
   %{py_INSTSONAME_debug} \
   -O0
 
-%if ! 0%{?main_python3}
-# altinstall only creates pkgconfig/python-3.5.pc, not the version with ABIFAGS,
+# altinstall only creates pkgconfig/python-3.X.pc, not the version with ABIFAGS,
 #  so we need to move the debug .pc file to not overwrite it by optimized install
 mv \
   %{buildroot}%{_libdir}/pkgconfig/python-%{pybasever}.pc \
   %{buildroot}%{_libdir}/pkgconfig/python-%{LDVERSION_debug}.pc
-%endif
 
 %endif # with_debug_build
 
@@ -853,10 +837,6 @@ InstallPython optimized \
   %{py_INSTSONAME_optimized}
 
 install -d -m 0755 ${RPM_BUILD_ROOT}%{pylibdir}/site-packages/__pycache__
-
-%if 0%{?main_python3}
-mv ${RPM_BUILD_ROOT}%{_bindir}/2to3 ${RPM_BUILD_ROOT}%{_bindir}/2to3-3
-%endif
 
 # Development tools
 install -m755 -d ${RPM_BUILD_ROOT}%{pylibdir}/Tools
@@ -1001,8 +981,8 @@ find %{buildroot} \
     -perm 555 -exec chmod 755 {} \;
 
 # Install macros for rpm:
-install -Dm0644 %{SOURCE2} %{buildroot}%{_macrosdir}/macros.python%{pybasever}
-install -Dm0644 %{SOURCE3} %{buildroot}%{_macrosdir}/macros.pybytecompile%{pybasever}
+install -Dm0644 %{SOURCE2} %{buildroot}%{rpmmacrodir}/macros.python%{pybasever}
+install -Dm0644 %{SOURCE3} %{buildroot}%{rpmmacrodir}/macros.pybytecompile%{pybasever}
 
 # Ensure that the curses module was linked against libncursesw.so, rather than
 # libncurses.so (bug 539917)
@@ -1032,12 +1012,6 @@ done
 ln -s \
   %{_bindir}/python%{LDVERSION_debug} \
   %{buildroot}%{_bindir}/python%{pybasever}-debug
-
-%if 0%{?main_python3}
-ln -s \
-  %{_bindir}/python%{pybasever}-debug \
-  %{buildroot}%{_bindir}/python3-debug
-%endif # main_python3
 %endif # with_debug_build
 
 #
@@ -1062,7 +1036,7 @@ sed \
 
 %if 0%{?with_debug_build}
 # In Python 3, python3 and python3-debug don't point to the same binary,
-# so we have to replace "python3" with "python3-debug" to get systemtap
+# so we have to replace "python3" with "python3.X-debug" to get systemtap
 # working with debug build
 sed \
    -e "s|LIBRARY_PATH|%{_libdir}/%{py_INSTSONAME_debug}|" \
@@ -1081,21 +1055,19 @@ echo '[ $? -eq 127 ] && echo "Could not find python%{LDVERSION_optimized}-`uname
   %{buildroot}%{_bindir}/python%{LDVERSION_optimized}-config
   chmod +x %{buildroot}%{_bindir}/python%{LDVERSION_optimized}-config
 
-%if ! 0%{?main_python3}
 # make altinstall doesn't create python3.X-config, but we want it
 #  (we don't want to have just python3.Xm-config, that's a bit confusing)
 ln -s \
   %{_bindir}/python%{LDVERSION_optimized}-config \
   %{buildroot}%{_bindir}/python%{pybasever}-config
-# make altinstall doesn't create python-3.5m.pc, only python-3.5.pc, but we want both
+# make altinstall doesn't create python-3.Xm.pc, only python-3.X.pc, but we want both
 ln -s \
   %{_libdir}/pkgconfig/python-%{pybasever}.pc \
   %{buildroot}%{_libdir}/pkgconfig/python-%{LDVERSION_optimized}.pc
-%endif # ! main_python3
 
-%if ! 0%{?main_python3}
+# remove libpython3.so non-main python to not cause collision
 rm -f %{buildroot}%{_libdir}/libpython3.so
-%endif # ! main_python3
+
 
 # ======================================================
 # Running the upstream test suite
@@ -1170,14 +1142,8 @@ CheckPython optimized
 %files
 %doc LICENSE README
 %{_bindir}/pydoc*
-%if 0%{?main_python3}
-%{_bindir}/python3
-%endif
 %{_bindir}/python%{pybasever}
 %{_bindir}/python%{pybasever}m
-%if 0%{?main_python3}
-%{_bindir}/pyvenv
-%endif
 %{_bindir}/pyvenv-%{pybasever}
 %{_mandir}/*/*
 
@@ -1375,9 +1341,6 @@ CheckPython optimized
 %dir %{_includedir}/python%{LDVERSION_optimized}/
 %{_includedir}/python%{LDVERSION_optimized}/%{_pyconfig_h}
 
-%if 0%{?main_python3}
-%{_libdir}/libpython3.so
-%endif
 %{_libdir}/libpython%{LDVERSION_optimized}.so
 %{_libdir}/%{py_INSTSONAME_optimized}
 %if 0%{?with_systemtap}
@@ -1393,24 +1356,15 @@ CheckPython optimized
 %{_includedir}/python%{LDVERSION_optimized}/*.h
 %exclude %{_includedir}/python%{LDVERSION_optimized}/%{_pyconfig_h}
 %doc Misc/README.valgrind Misc/valgrind-python.supp Misc/gdbinit
-%if 0%{?main_python3}
-%{_bindir}/python3-config
-%endif
 %{_bindir}/python%{pybasever}-config
 %{_bindir}/python%{LDVERSION_optimized}-config
 %{_bindir}/python%{LDVERSION_optimized}-*-config
 %{_libdir}/pkgconfig/python-%{LDVERSION_optimized}.pc
 %{_libdir}/pkgconfig/python-%{pybasever}.pc
-%if 0%{?main_python3}
-%{_libdir}/pkgconfig/python3.pc
-%endif
-%{_macrosdir}/macros.python%{pybasever}
-%{_macrosdir}/macros.pybytecompile%{pybasever}
+%{rpmmacrodir}/macros.python%{pybasever}
+%{rpmmacrodir}/macros.pybytecompile%{pybasever}
 
 %files tools
-%if 0%{?main_python3}
-%{_bindir}/2to3-3
-%endif
 %{_bindir}/2to3-%{pybasever}
 %{_bindir}/idle*
 %{pylibdir}/Tools
@@ -1453,9 +1407,6 @@ CheckPython optimized
 
 # Analog of the core subpackage's files:
 %{_bindir}/python%{LDVERSION_debug}
-%if 0%{?main_python3}
-%{_bindir}/python3-debug
-%endif
 %{_bindir}/python%{pybasever}-debug
 
 # Analog of the -libs subpackage's files:
