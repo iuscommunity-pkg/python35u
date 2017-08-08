@@ -631,10 +631,9 @@ diff -Naurp a/Lib/test/test_systemtap.py b/Lib/test/test_systemtap.py
 +
 +if __name__ == "__main__":
 +    test_main()
-diff -Naurp a/Makefile.pre.in b/Makefile.pre.in
---- a/Makefile.pre.in	2017-01-17 01:57:52.000000000 -0600
-+++ b/Makefile.pre.in	2017-01-17 10:31:12.009089378 -0600
-@@ -415,6 +415,7 @@ PYTHON_OBJS=	\
+--- Python-3.5.4/Makefile.pre.in	2017-08-07 07:59:11.000000000 +0000
++++ Python-3.5.4/Makefile.pre.in.patch	2017-08-08 13:37:37.840329262 +0000
+@@ -383,6 +383,7 @@
  		Python/formatter_unicode.o \
  		Python/fileutils.o \
  		Python/$(DYNLOADFILE) \
@@ -642,19 +641,19 @@ diff -Naurp a/Makefile.pre.in b/Makefile.pre.in
  		$(LIBOBJS) \
  		$(MACHDEP_OBJS) \
  		$(THREADOBJ)
-@@ -868,7 +869,8 @@ Objects/setobject.o: $(srcdir)/Objects/s
- $(OPCODETARGETS_H): $(OPCODETARGETGEN_FILES)
- 	$(PYTHON_FOR_GEN) $(OPCODETARGETGEN) $(OPCODETARGETS_H)
+@@ -864,7 +865,8 @@
+ 	$(PYTHON_FOR_REGEN) $(srcdir)/Python/makeopcodetargets.py \
+ 		$(srcdir)/Python/opcode_targets.h
  
--Python/ceval.o: $(OPCODETARGETS_H) $(srcdir)/Python/ceval_gil.h
-+Python/ceval.o: $(OPCODETARGETS_H) $(srcdir)/Python/ceval_gil.h \
-+			$(srcdir)/Python/ceval_systemtap.h @SYSTEMTAPDEPS@
+-Python/ceval.o: $(srcdir)/Python/opcode_targets.h $(srcdir)/Python/ceval_gil.h
++Python/ceval.o: $(srcdir)/Python/opcode_targets.h $(srcdir)/Python/ceval_gil.h \
++          $(srcdir)/Python/ceval_systemtap.h @SYSTEMTAPDEPS@
  
- Python/frozen.o: Python/importlib.h Python/importlib_external.h
+ Python/frozen.o: $(srcdir)/Python/importlib.h $(srcdir)/Python/importlib_external.h
  
-@@ -876,6 +878,13 @@ Objects/typeobject.o: Objects/typeslots.
- Objects/typeslots.inc: $(srcdir)/Include/typeslots.h $(srcdir)/Objects/typeslots.py
- 	$(PYTHON_FOR_GEN) $(srcdir)/Objects/typeslots.py < $(srcdir)/Include/typeslots.h Objects/typeslots.inc
+@@ -878,6 +880,13 @@
+ 		< $(srcdir)/Include/typeslots.h \
+ 		$(srcdir)/Objects/typeslots.inc
  
 +# Only needed with --with-systemtap; not a public header:
 +$(srcdir)/Python/pysystemtap.h: $(srcdir)/Python/pysystemtap.d
@@ -666,7 +665,7 @@ diff -Naurp a/Makefile.pre.in b/Makefile.pre.in
  ############################################################################
  # Header files
  
-@@ -1597,6 +1606,7 @@ clean: pycremoval
+@@ -1601,6 +1610,7 @@
  	-rm -f Lib/lib2to3/*Grammar*.pickle
  	-rm -f Programs/_testembed Programs/_freeze_importlib
  	-find build -type f -a ! -name '*.gc??' -exec rm -f {} ';'

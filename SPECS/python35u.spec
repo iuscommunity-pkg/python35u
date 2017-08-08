@@ -101,7 +101,7 @@
 # ==================
 Summary: Version 3 of the Python programming language aka Python 3000
 Name: python%{pyshortver}u
-Version: %{pybasever}.3
+Version: %{pybasever}.4
 Release: 1.ius%{?dist}
 License: Python
 Group: Development/Languages
@@ -1521,6 +1521,10 @@ CheckPython optimized
 # ======================================================
 
 %changelog
+* Tue Aug 08 2017 Ben Harper <ben.harper@rackspace.com> - 3.5.4-1.ius
+- Latest upstream
+- Rebase patch55
+
 * Tue Jan 17 2017 Carl George <carl.george@rackspace.com> - 3.5.3-1.ius
 - Latest upstream
 - Rebase patch55, patch146, patch180
