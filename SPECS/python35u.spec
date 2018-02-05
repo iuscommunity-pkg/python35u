@@ -1057,6 +1057,14 @@ find %{buildroot} -type f -a -name "*.py" -print0 | \
     PYTHONPATH="%{buildroot}%{_libdir}/python%{pybasever} %{buildroot}%{_libdir}/python%{pybasever}/site-packages" \
     xargs -0 %{buildroot}%{_bindir}/python%{pybasever} %{SOURCE8}
 
+# In some scenarios a larger stack is needed to avoid testInfiniteRecursion
+# from segfaulting.  This was previously seen on ppc64 (rhbz#1292462), and more
+# recently on EL6.
+%if 0%{?rhel} && 0%{?rhel} < 7
+  ulimit -a
+  ulimit -s 16384
+%endif
+
 
 topdir=$(pwd)
 CheckPython() {
@@ -1501,6 +1509,7 @@ CheckPython optimized
 * Mon Feb 05 2018 Carl George <carl@george.computer> - 3.5.5-1.ius
 - Latest upstream
 - Skip test_bdist_rpm using test config rather than a patch (removes patch 137) (Fedora)
+- Use a larger stack size on EL6
 
 * Tue Aug 08 2017 Ben Harper <ben.harper@rackspace.com> - 3.5.4-1.ius
 - Latest upstream
