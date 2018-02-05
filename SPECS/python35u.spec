@@ -718,9 +718,9 @@ BuildPython debug \
   python-debug \
   python%{pybasever}-debug \
 %ifarch %{ix86} x86_64 ppc %{power64}
-  "--with-pydebug --with-tsc --with-count-allocs --with-call-profile --without-ensurepip" \
+  "--with-pydebug --with-tsc --without-ensurepip" \
 %else
-  "--with-pydebug --with-count-allocs --with-call-profile --without-ensurepip" \
+  "--with-pydebug --without-ensurepip" \
 %endif
   false \
   -O0
@@ -1510,6 +1510,7 @@ CheckPython optimized
 - Drop unnecessary db4 build requirement
 - Update macros.python3.5 to align with python36u
 - Fixed .pyc bytecompilation (Fedora)
+- Remove unused configure flags (Fedora)
 
 * Tue Aug 08 2017 Ben Harper <ben.harper@rackspace.com> - 3.5.4-1.ius
 - Latest upstream
