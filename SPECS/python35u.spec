@@ -181,8 +181,8 @@ Source1: find-provides-without-python-sonames.sh
 %global _use_internal_dependency_generator 0
 %global __find_provides %{SOURCE1}
 
-# Supply various useful macros for building python 3.5 modules:
-#  __python35u, python35u_sitelib, python35u_sitearch
+# Supply various useful macros for building python 3.X modules:
+#  __python3X, python3X_sitelib, python3X_sitearch
 Source2: macros.python%{pybasever}
 
 # Supply an RPM macro "py_byte_compile" for the python3-devel subpackage
@@ -1513,6 +1513,7 @@ CheckPython optimized
 - Run autotools (autoconf268) to generate the configure script before building (Fedora)
 - Use bundled expat on EL6
 - Drop unnecessary db4 build requirement
+- Update macros.python3.5 to align with python36u
 
 * Tue Aug 08 2017 Ben Harper <ben.harper@rackspace.com> - 3.5.4-1.ius
 - Latest upstream

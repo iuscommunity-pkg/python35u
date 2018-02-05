@@ -1,16 +1,19 @@
-%__python35u /usr/bin/python3.5
-%python35u_sitelib %(%{__python35u} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-%python35u_sitearch %(%{__python35u} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")
-%python35u_version %(%{__python35u} -c "import sys; sys.stdout.write(sys.version[:3])")
-%python35u_version_nodots %(%{__python35u} -c "import sys; sys.stdout.write(sys.version[:3].replace('.',''))")
-%py35udir %{_builddir}/python35u-%{name}-%{version}-%{release}
+%__python35 /usr/bin/python3.5
+%python35_sitelib %(%{__python35} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+%python35_sitearch %(%{__python35} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")
+%python35_version %(%{__python35} -c "import sys; sys.stdout.write(sys.version[:3])")
+%python35_version_nodots %(%{__python35} -c "import sys; sys.stdout.write(sys.version[:3].replace('.',''))")
+%py35dir %{_builddir}/python35-%{name}-%{version}-%{release}
 
-%py35u_shbang_opts -s
+%py35_shbang_opts -s
 
-%py35u_build() %{expand:\
-CFLAGS="%{optflags}" %{__python35u} setup.py %{?py_setup_args} build --executable="%{__python35u} %{py35u_shbang_opts}" %{?1}\
+# Use the slashes after expand so that the command starts on the same line as
+# the macro
+%py35_build() %{expand:\\\
+  CFLAGS="%{optflags}" %{__python35} setup.py %{?py_setup_args} build --executable="%{__python35} %{py35_shbang_opts}" %{?*}
+  sleep 1
 }
 
-%py35u_install() %{expand:\
-CFLAGS="%{optflags}" %{__python35u} setup.py %{?py_setup_args} install -O1 --skip-build --root %{buildroot} %{?1}\
+%py35_install() %{expand:\\\
+  CFLAGS="%{optflags}" %{__python35} setup.py %{?py_setup_args} install -O1 --skip-build --root %{buildroot} %{?*}
 }
