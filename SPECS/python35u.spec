@@ -260,10 +260,6 @@ Patch131: 00131-disable-tests-in-test_io.patch
 # these unittest hooks in their own "check" phases)
 Patch132: 00132-add-rpmbuild-hooks-to-unittest.patch
 
-# 00137 #
-# Some tests within distutils fail when run in an rpmbuild:
-Patch137: 00137-skip-distutils-tests-that-fail-in-rpmbuild.patch
-
 # 00139 #
 # ARM-specific: skip known failure in test_float:
 #  http://bugs.python.org/issue8265 (rhbz#706253)
@@ -626,7 +622,6 @@ cp -a %{SOURCE21} Lib/ensurepip/_bundled/
 %patch131 -p1
 %endif
 %patch132 -p1
-%patch137 -p1
 %ifarch %{arm}
 %patch139 -p1
 %patch140 -p1
@@ -1086,6 +1081,7 @@ CheckPython() {
   LD_LIBRARY_PATH=$ConfDir $ConfDir/python -m test.regrtest \
     --verbose --findleaks \
     -x test_distutils \
+    -x test_bdist_rpm \
     %if 0%{?rhel} < 7
     -x test_readline \
     %endif
@@ -1504,6 +1500,7 @@ CheckPython optimized
 %changelog
 * Mon Feb 05 2018 Carl George <carl@george.computer> - 3.5.5-1.ius
 - Latest upstream
+- Skip test_bdist_rpm using test config rather than a patch (removes patch 137) (Fedora)
 
 * Tue Aug 08 2017 Ben Harper <ben.harper@rackspace.com> - 3.5.4-1.ius
 - Latest upstream
