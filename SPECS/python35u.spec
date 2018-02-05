@@ -379,11 +379,6 @@ Patch178: 00178-dont-duplicate-flags-in-sysconfig.patch
 # Doesn't seem to affect Python 2 AFAICS.
 Patch179: 00179-dont-raise-error-on-gdb-corrupted-frames-in-backtrace.patch
 
-# 00180 #
-# Enable building on ppc64p7
-# Not appropriate for upstream, Fedora-specific naming
-Patch180: 00180-python-add-support-for-ppc64p7.patch
-
 # 00186 #
 # Fix for https://bugzilla.redhat.com/show_bug.cgi?id=1023607
 # Previously, this fixed a problem where some *.py files were not being
@@ -434,11 +429,9 @@ Patch201: 00201-fix-memory-leak-in-gdbm.patch
 # but the LIBPL variable defined there doesn't respect libdir macro
 Patch205: 00205-make-libpl-respect-lib64.patch
 
-# 00206 #
-# Remove hf flag from arm triplet which is used
-# by debian but fedora infra uses only eabi without hf
-Patch206: 00206-remove-hf-from-arm-triplet.patch
-
+# 00274 #
+# Upstream uses Debian-style architecture naming. Change to match Fedora.
+Patch274: 00274-fix-arch-names.patch
 
 # ======================================================
 # Additional metadata, and subpackages
@@ -641,14 +634,13 @@ cp -a %{SOURCE21} Lib/ensurepip/_bundled/
 %patch173 -p1
 %patch178 -p1
 %patch179 -p1
-%patch180 -p1
 %patch186 -p1
 %patch188 -p1
 
 %patch194 -p1
 %patch196 -p1
 %patch205 -p1
-%patch206 -p1
+%patch274 -p1
 
 
 # ======================================================
@@ -1513,6 +1505,7 @@ CheckPython optimized
 - Skip test_bdist_rpm using test config rather than a patch (removes patch 137) (Fedora)
 - Use a larger stack size on EL6
 - Install license correctly
+- Merge patches 180 and 206 (architecture naming) into new patch 274 (Fedora)
 
 * Tue Aug 08 2017 Ben Harper <ben.harper@rackspace.com> - 3.5.4-1.ius
 - Latest upstream
