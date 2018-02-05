@@ -82,11 +82,11 @@
 # (/usr/bin/python, rather than the freshly built python), thus leading to
 # numerous syntax errors, and incorrect magic numbers in the .pyc files.  We
 # thus override __os_install_post to avoid invoking this script:
-%global __os_install_post /usr/lib/rpm/brp-compress \
-  %{!?__debug_package:/usr/lib/rpm/brp-strip %{__strip}} \
-  /usr/lib/rpm/brp-strip-static-archive %{__strip} \
-  /usr/lib/rpm/brp-strip-comment-note %{__strip} %{__objdump} \
-  /usr/lib/rpm/%{?el6:redhat/}brp-python-hardlink
+%global __os_install_post /usr/lib/rpm%{?rhel:/redhat}/brp-compress \
+  %{!?__debug_package:/usr/lib/rpm%{?rhel:/redhat}/brp-strip %{__strip}} \
+  %{!?__debug_package:/usr/lib/rpm%{?rhel:/redhat}/brp-strip-comment-note %{__strip} %{__objdump}} \
+  /usr/lib/rpm%{?rhel:/redhat}/brp-strip-static-archive %{__strip} \
+  /usr/lib/rpm%{?rhel:/redhat}/brp-python-hardlink
 # to remove the invocation of brp-python-bytecompile, whilst keeping the
 # invocation of brp-python-hardlink (since this should still work for python3
 # pyc/pyo files)
@@ -99,7 +99,7 @@
 # ==================
 # Top-level metadata
 # ==================
-Summary: Version 3 of the Python programming language aka Python 3000
+Summary: Version 3.5 of the Python programming language
 Name: python%{pyshortver}u
 Version: %{pybasever}.4
 Release: 1.ius%{?dist}
@@ -131,7 +131,7 @@ BuildRequires: expat-devel >= 2.1.0
 
 BuildRequires: findutils
 BuildRequires: gcc-c++
-%if %{with_gdbm}
+%if 0%{?with_gdbm}
 BuildRequires: gdbm-devel
 %endif
 BuildRequires: glibc-devel
@@ -206,10 +206,10 @@ Source7: pyfuntop.stp
 # Written by bkabrda
 Source8: check-pyc-and-pyo-timestamps.py
 
-%if 0%{?setuptools_version:1}
+%if %{defined setuptools_version}
 Source20: https://files.pythonhosted.org/packages/py2.py3/s/setuptools/setuptools-%{setuptools_version}-py2.py3-none-any.whl
 %endif
-%if 0%{?pip_version:1}
+%if %{defined pip_version}
 Source21: https://files.pythonhosted.org/packages/py2.py3/p/pip/pip-%{pip_version}-py2.py3-none-any.whl
 %endif
 
@@ -576,15 +576,15 @@ cp -a %{SOURCE7} .
 # Ensure that we're using the system copy of various libraries, rather than
 # copies shipped by upstream in the tarball:
 #   Remove embedded copy of expat:
-rm -r Modules/expat || exit 1
+rm -r Modules/expat
 
 #   Remove embedded copy of libffi:
 for SUBDIR in darwin libffi libffi_arm_wince libffi_msvc libffi_osx ; do
-  rm -r Modules/_ctypes/$SUBDIR || exit 1 ;
+  rm -r Modules/_ctypes/$SUBDIR
 done
 
 #   Remove embedded copy of zlib:
-rm -r Modules/zlib || exit 1
+rm -r Modules/zlib
 
 # Don't build upstream Python's implementation of these crypto algorithms;
 # instead rely on _hashlib and OpenSSL.
@@ -597,12 +597,12 @@ for f in md5module.c sha1module.c sha256module.c sha512module.c; do
     rm Modules/$f
 done
 
-%if 0%{?setuptools_version:1}
+%if %{defined setuptools_version}
 sed -r -e '/^_SETUPTOOLS_VERSION =/ s/"[0-9.]+"/"%{setuptools_version}"/' -i Lib/ensurepip/__init__.py
 rm Lib/ensurepip/_bundled/setuptools-*.whl
 cp -a %{SOURCE20} Lib/ensurepip/_bundled/
 %endif
-%if 0%{?pip_version:1}
+%if %{defined pip_version}
 sed -r -e '/^_PIP_VERSION =/ s/"[0-9.]+"/"%{pip_version}"/' -i Lib/ensurepip/__init__.py
 rm Lib/ensurepip/_bundled/pip-*.whl
 cp -a %{SOURCE21} Lib/ensurepip/_bundled/
@@ -621,8 +621,6 @@ cp -a %{SOURCE21} Lib/ensurepip/_bundled/
 %patch102 -p1
 %patch104 -p1
 %endif
-
-
 %patch111 -p1
 %ifarch ppc %{power64}
 %patch131 -p1
@@ -657,16 +655,6 @@ cp -a %{SOURCE21} Lib/ensurepip/_bundled/
 %patch205 -p1
 %patch206 -p1
 
-# Currently (2010-01-15), http://docs.python.org/library is for 2.6, and there
-# are many differences between 2.6 and the Python 3 library.
-#
-# Fix up the URLs within pydoc to point at the documentation for this
-# MAJOR.MINOR version:
-#
-sed --in-place \
-    --expression="s|http://docs.python.org/library|http://docs.python.org/%{pybasever}/library|g" \
-    Lib/pydoc.py || exit 1
-
 
 # ======================================================
 # Configuring and building the code:
@@ -676,11 +664,11 @@ sed --in-place \
 topdir=$(pwd)
 export CFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC -fwrapv"
 export CXXFLAGS="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC -fwrapv"
-export CPPFLAGS="`pkg-config --cflags-only-I libffi`"
+export CPPFLAGS="$(pkg-config --cflags-only-I libffi)"
 export OPT="$RPM_OPT_FLAGS -D_GNU_SOURCE -fPIC -fwrapv"
 export LINKCC="gcc"
-export CFLAGS="$CFLAGS `pkg-config --cflags openssl`"
-export LDFLAGS="$RPM_LD_FLAGS `pkg-config --libs-only-L openssl`"
+export CFLAGS="$CFLAGS $(pkg-config --cflags openssl)"
+export LDFLAGS="$RPM_LD_FLAGS $(pkg-config --libs-only-L openssl)"
 
 # Define a function, for how to perform a "build" of python for a given
 # configuration:
@@ -693,10 +681,8 @@ BuildPython() {
   MoreCFlags=$6
 
   ConfDir=build/$ConfName
-
   echo STARTING: BUILD OF PYTHON FOR CONFIGURATION: $ConfName - %{_bindir}/$BinaryName
   mkdir -p $ConfDir
-
   pushd $ConfDir
 
   # Use the freshly created "configure" script, but in the directory two above:
@@ -762,7 +748,6 @@ BuildPython optimized \
 
 %install
 topdir=$(pwd)
-rm -fr %{buildroot}
 mkdir -p %{buildroot}%{_prefix} %{buildroot}%{_mandir}
 
 InstallPython() {
@@ -778,7 +763,11 @@ InstallPython() {
 
   pushd $ConfDir
 
-make altinstall DESTDIR=%{buildroot} INSTALL="install -p" EXTRA_CFLAGS="$MoreCFlags"
+  make \
+    DESTDIR=%{buildroot} \
+    INSTALL="install -p" \
+    EXTRA_CFLAGS="$MoreCFlags" \
+    altinstall
 
   popd
 
@@ -852,9 +841,6 @@ cp -ar Doc/tools %{buildroot}%{pylibdir}/Doc/
 
 # Demo scripts
 cp -ar Tools/demo %{buildroot}%{pylibdir}/Tools/
-
-# Fix for bug #136654
-rm -f %{buildroot}%{pylibdir}/email/test/data/audiotest.au %{buildroot}%{pylibdir}/test/audiotest.au
 
 %if "%{_lib}" == "lib64"
 install -d -m 0755 %{buildroot}/%{_prefix}/lib/python%{pybasever}/site-packages/__pycache__
@@ -942,14 +928,9 @@ chmod a-x \
 find %{buildroot} -name \*.bat -exec rm {} \;
 
 # Get rid of backup files:
-find %{buildroot}/ -name "*~" -exec rm -f {} \;
-find . -name "*~" -exec rm -f {} \;
-rm -f %{buildroot}%{pylibdir}/LICENSE.txt
-# Junk, no point in putting in -test sub-pkg
-rm -f ${RPM_BUILD_ROOT}/%{pylibdir}/idlelib/testcode.py*
-
-# Get rid of stray patch file from buildroot:
-rm -f %{buildroot}%{pylibdir}/test/test_imp.py.apply-our-changes-to-expected-shebang # from patch 4
+find %{buildroot}/ -name "*~" -exec rm {} \;
+find . -name "*~" -exec rm {} \;
+rm %{buildroot}%{pylibdir}/LICENSE.txt
 
 # Fix end-of-line encodings:
 find %{buildroot}/ -name \*.py -exec sed -i 's/\r//' {} \;
@@ -1066,7 +1047,7 @@ ln -s \
   %{buildroot}%{_libdir}/pkgconfig/python-%{LDVERSION_optimized}.pc
 
 # remove libpython3.so non-main python to not cause collision
-rm -f %{buildroot}%{_libdir}/libpython3.so
+rm %{buildroot}%{_libdir}/libpython3.so
 
 
 # ======================================================
@@ -1141,7 +1122,7 @@ CheckPython optimized
 
 %files
 %doc LICENSE README
-%{_bindir}/pydoc*
+%{_bindir}/pydoc%{pybasever}
 %{_bindir}/python%{pybasever}
 %{_bindir}/python%{pybasever}m
 %{_bindir}/pyvenv-%{pybasever}
@@ -1167,7 +1148,7 @@ CheckPython optimized
 %{dynload_dir}/_dbm.%{SOABI_optimized}.so
 %{dynload_dir}/_decimal.%{SOABI_optimized}.so
 %{dynload_dir}/_elementtree.%{SOABI_optimized}.so
-%if %{with_gdbm}
+%if 0%{?with_gdbm}
 %{dynload_dir}/_gdbm.%{SOABI_optimized}.so
 %endif
 %{dynload_dir}/_hashlib.%{SOABI_optimized}.so
@@ -1341,7 +1322,6 @@ CheckPython optimized
 %dir %{_includedir}/python%{LDVERSION_optimized}/
 %{_includedir}/python%{LDVERSION_optimized}/%{_pyconfig_h}
 
-%{_libdir}/libpython%{LDVERSION_optimized}.so
 %{_libdir}/%{py_INSTSONAME_optimized}
 %if 0%{?with_systemtap}
 %dir %(dirname %{tapsetdir})
@@ -1359,6 +1339,7 @@ CheckPython optimized
 %{_bindir}/python%{pybasever}-config
 %{_bindir}/python%{LDVERSION_optimized}-config
 %{_bindir}/python%{LDVERSION_optimized}-*-config
+%{_libdir}/libpython%{LDVERSION_optimized}.so
 %{_libdir}/pkgconfig/python-%{LDVERSION_optimized}.pc
 %{_libdir}/pkgconfig/python-%{pybasever}.pc
 %{rpmmacrodir}/macros.python%{pybasever}
@@ -1366,7 +1347,7 @@ CheckPython optimized
 
 %files tools
 %{_bindir}/2to3-%{pybasever}
-%{_bindir}/idle*
+%{_bindir}/idle%{pybasever}
 %{pylibdir}/Tools
 %doc %{pylibdir}/Doc
 
@@ -1427,7 +1408,7 @@ CheckPython optimized
 %{dynload_dir}/_dbm.%{SOABI_debug}.so
 %{dynload_dir}/_decimal.%{SOABI_debug}.so
 %{dynload_dir}/_elementtree.%{SOABI_debug}.so
-%if %{with_gdbm}
+%if 0%{?with_gdbm}
 %{dynload_dir}/_gdbm.%{SOABI_debug}.so
 %endif
 %{dynload_dir}/_hashlib.%{SOABI_debug}.so
@@ -1946,7 +1927,7 @@ ppc to avoid aliasing violations (patch 130; rhbz#698726)
 - add %%python3_version to the rpm macros (rhbz#719082)
 
 * Mon Jul 11 2011 Dennis Gilmore <dennis@ausil.us> - 3.2.1-2
-- disable some tests on sparc arches 
+- disable some tests on sparc arches
 
 * Mon Jul 11 2011 David Malcolm <dmalcolm@redhat.com> - 3.2.1-1
 - 3.2.1; refresh lib64 patch (102), subprocess unit test patch (129), disabling
