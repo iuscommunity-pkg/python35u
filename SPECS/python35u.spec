@@ -937,16 +937,11 @@ iconv -f iso8859-1 -t utf-8 %{buildroot}/%{pylibdir}/Demo/rpc/README > README.co
 
 # Do bytecompilation with the newly installed interpreter.
 # This is similar to the script in macros.pybytecompile
-# compile *.pyo
-find %{buildroot} -type f -a -name "*.py" -print0 | \
-    LD_LIBRARY_PATH="%{buildroot}%{dynload_dir}/:%{buildroot}%{_libdir}" \
-    PYTHONPATH="%{buildroot}%{_libdir}/python%{pybasever} %{buildroot}%{_libdir}/python%{pybasever}/site-packages" \
-    xargs -0 %{buildroot}%{_bindir}/python%{pybasever} -O -c 'import py_compile, sys; [py_compile.compile(f, dfile=f.partition("%{buildroot}")[2]) for f in sys.argv[1:]]' || :
 # compile *.pyc
 find %{buildroot} -type f -a -name "*.py" -print0 | \
     LD_LIBRARY_PATH="%{buildroot}%{dynload_dir}/:%{buildroot}%{_libdir}" \
     PYTHONPATH="%{buildroot}%{_libdir}/python%{pybasever} %{buildroot}%{_libdir}/python%{pybasever}/site-packages" \
-    xargs -0 %{buildroot}%{_bindir}/python%{pybasever} -O -c 'import py_compile, sys; [py_compile.compile(f, dfile=f.partition("%{buildroot}")[2], optimize=0) for f in sys.argv[1:]]' || :
+    xargs -0 %{buildroot}%{_bindir}/python%{pybasever} -O -c 'import py_compile, sys; [py_compile.compile(f, dfile=f.partition("%{buildroot}")[2], optimize=opt) for opt in range(3) for f in sys.argv[1:]]' || :
 
 # Fixup permissions for shared libraries from non-standard 555 to standard 755:
 find %{buildroot} \
@@ -1514,6 +1509,7 @@ CheckPython optimized
 - Use bundled expat on EL6
 - Drop unnecessary db4 build requirement
 - Update macros.python3.5 to align with python36u
+- Fixed .pyc bytecompilation (Fedora)
 
 * Tue Aug 08 2017 Ben Harper <ben.harper@rackspace.com> - 3.5.4-1.ius
 - Latest upstream
