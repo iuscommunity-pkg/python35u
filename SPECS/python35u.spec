@@ -101,7 +101,7 @@
 # ==================
 Summary: Version 3.5 of the Python programming language
 Name: python%{pyshortver}u
-Version: %{pybasever}.4
+Version: %{pybasever}.5
 Release: 1.ius%{?dist}
 License: Python
 Group: Development/Languages
@@ -1502,6 +1502,9 @@ CheckPython optimized
 # ======================================================
 
 %changelog
+* Mon Feb 05 2018 Carl George <carl@george.computer> - 3.5.5-1.ius
+- Latest upstream
+
 * Tue Aug 08 2017 Ben Harper <ben.harper@rackspace.com> - 3.5.4-1.ius
 - Latest upstream
 - Rebase patch55
