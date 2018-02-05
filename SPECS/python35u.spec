@@ -124,7 +124,6 @@ BuildRequires: autoconf%{?el6:268}
 BuildRequires: bluez-libs-devel
 BuildRequires: bzip2
 BuildRequires: bzip2-devel
-BuildRequires: db4-devel >= 4.7
 
 # expat 2.1.0 added the symbol XML_SetHashSalt without bumping SONAME.  We use
 # it (in pyexpat) in order to enable the fix in Python-3.2.3 for CVE-2012-0876:
@@ -1513,6 +1512,7 @@ CheckPython optimized
 - Merge patches 180 and 206 (architecture naming) into new patch 274 (Fedora)
 - Run autotools (autoconf268) to generate the configure script before building (Fedora)
 - Use bundled expat on EL6
+- Drop unnecessary db4 build requirement
 
 * Tue Aug 08 2017 Ben Harper <ben.harper@rackspace.com> - 3.5.4-1.ius
 - Latest upstream
