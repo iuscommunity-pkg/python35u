@@ -1125,7 +1125,8 @@ CheckPython optimized
 
 
 %files
-%doc LICENSE README
+%license LICENSE
+%doc README
 %{_bindir}/pydoc%{pybasever}
 %{_bindir}/python%{pybasever}
 %{_bindir}/python%{pybasever}m
@@ -1133,7 +1134,8 @@ CheckPython optimized
 %{_mandir}/*/*
 
 %files libs
-%doc LICENSE README
+%license LICENSE
+%doc README
 %dir %{pylibdir}
 %dir %{dynload_dir}
 %{dynload_dir}/_bisect.%{SOABI_optimized}.so
@@ -1510,6 +1512,7 @@ CheckPython optimized
 - Latest upstream
 - Skip test_bdist_rpm using test config rather than a patch (removes patch 137) (Fedora)
 - Use a larger stack size on EL6
+- Install license correctly
 
 * Tue Aug 08 2017 Ben Harper <ben.harper@rackspace.com> - 3.5.4-1.ius
 - Latest upstream
