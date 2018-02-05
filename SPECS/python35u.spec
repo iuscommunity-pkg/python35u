@@ -22,6 +22,13 @@
 
 # ABIFLAGS, LDVERSION and SOABI are in the upstream Makefile
 # With Python 3.3, we lose the "u" suffix due to PEP 393
+
+%if 0%{?rhel} && 0%{?rhel} < 7
+%global with_system_expat 0
+%else
+%global with_system_expat 1
+%endif
+
 %global ABIFLAGS_optimized m
 %global ABIFLAGS_debug     dm
 
@@ -121,11 +128,7 @@ BuildRequires: db4-devel >= 4.7
 
 # expat 2.1.0 added the symbol XML_SetHashSalt without bumping SONAME.  We use
 # it (in pyexpat) in order to enable the fix in Python-3.2.3 for CVE-2012-0876:
-%if 0%{?rhel} && 0%{?rhel} < 7
-# XML_SetHashSalt was backported to EL6
-# https://rhn.redhat.com/errata/RHSA-2012-0731.html
-BuildRequires: expat-devel >= 2.0.1-11
-%else
+%if 0%{?with_system_expat}
 BuildRequires: expat-devel >= 2.1.0
 %endif
 
@@ -456,17 +459,6 @@ Summary:        Python 3 runtime libraries
 Group:          Development/Libraries
 #Requires:       %{name} = %{version}-%{release}
 
-# expat 2.1.0 added the symbol XML_SetHashSalt without bumping SONAME.  We use
-# this symbol (in pyexpat), so we must explicitly state this dependency to
-# prevent "import pyexpat" from failing with a linker error if someone hasn't
-# yet upgraded expat:
-%if 0%{?rhel} && 0%{?rhel} < 7
-# XML_SetHashSalt was backported to EL6
-# https://rhn.redhat.com/errata/RHSA-2012-0731.html
-Requires: expat >= 2.0.1-11
-%else
-Requires: expat >= 2.1.0
-%endif
 
 %description libs
 This package contains files used to embed Python 3 into applications.
@@ -565,7 +557,9 @@ cp -a %{SOURCE7} .
 # Ensure that we're using the system copy of various libraries, rather than
 # copies shipped by upstream in the tarball:
 #   Remove embedded copy of expat:
+%if 0%{?with_system_expat}
 rm -r Modules/expat
+%endif
 
 #   Remove embedded copy of libffi:
 for SUBDIR in darwin libffi libffi_arm_wince libffi_msvc libffi_osx ; do
@@ -689,7 +683,9 @@ BuildPython() {
   --enable-shared \
   --with-computed-gotos=%{with_computed_gotos} \
   --with-dbmliborder=gdbm:ndbm:bdb \
+%if 0%{?with_system_expat}
   --with-system-expat \
+%endif
   --with-system-ffi \
   --enable-loadable-sqlite-extensions \
 %if 0%{?with_systemtap}
@@ -1516,6 +1512,7 @@ CheckPython optimized
 - Install license correctly
 - Merge patches 180 and 206 (architecture naming) into new patch 274 (Fedora)
 - Run autotools (autoconf268) to generate the configure script before building (Fedora)
+- Use bundled expat on EL6
 
 * Tue Aug 08 2017 Ben Harper <ben.harper@rackspace.com> - 3.5.4-1.ius
 - Latest upstream
