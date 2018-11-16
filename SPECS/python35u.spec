@@ -108,7 +108,7 @@
 # ==================
 Summary: Version 3.5 of the Python programming language
 Name: python%{pyshortver}u
-Version: %{pybasever}.5
+Version: %{pybasever}.6
 Release: 1.ius%{?dist}
 License: Python
 Group: Development/Languages
@@ -1084,9 +1084,7 @@ CheckPython() {
     %if 0%{?rhel} < 7
     -x test_readline \
     %endif
-    %ifarch ppc64le aarch64
     -x test_faulthandler \
-    %endif
     %ifarch %{power64} s390 s390x armv7hl aarch64
     -x test_gdb
     %endif
@@ -1499,6 +1497,9 @@ CheckPython optimized
 # ======================================================
 
 %changelog
+* Fri Nov 16 2018 Carl George <carl@george.computer> - 3.5.6-1.ius
+- Latest upstream
+
 * Mon Feb 05 2018 Carl George <carl@george.computer> - 3.5.5-1.ius
 - Latest upstream
 - Skip test_bdist_rpm using test config rather than a patch (removes patch 137) (Fedora)
